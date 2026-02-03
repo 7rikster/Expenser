@@ -4,9 +4,9 @@ import {prisma} from "../../lib";
 const create = async (req: Request, res: Response, next: NextFunction) => {
 
     try {
-        const clerkid = req.auth?.userId;
+        const { userId } =  req.auth();
         const existingUser = await prisma.user.findUnique({
-        where: { clerkUserId: clerkid },
+        where: { clerkUserId: userId },
         });
 
         if (existingUser) {
@@ -33,7 +33,7 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
             data: {
                 email,
                 name,
-                clerkUserId: clerkid,
+                clerkUserId: userId,
                 imageUrl: imageUrl || null,
                 dailyBudget: 100,
                 monthlyBudget: 3000,

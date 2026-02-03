@@ -10,6 +10,7 @@ import {
   SignedOut,
   UserButton,
 } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,11 +49,12 @@ export default function RootLayout({
                   </button>
                 </SignUpButton>
               </SignedOut> */}
-              <SignedIn>
-                <UserButton />
-              </SignedIn>
+              {/* <SignedIn>
+                <UserButton afterSignOutUrl="/sign-in" />
+              </SignedIn> */}
             </header>
             <main className="min-h-screen">{children}</main>
+            <Toaster richColors/>
             <footer className="py-12 bg-primary font-sans ">
               <div className="container mx-auto px-4 text-center text-accent">
                 <p>Made with ❤️ by 7rikster</p>
