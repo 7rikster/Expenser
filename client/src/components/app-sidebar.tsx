@@ -21,8 +21,9 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import Link from "next/link";
-import { UserButton, useUser } from "@clerk/nextjs";
+import { SignOutButton, UserButton, useUser } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 
 export const AppSidebar = () => {
   const { theme, setTheme } = useTheme();
@@ -77,47 +78,17 @@ export const AppSidebar = () => {
 
   const user = session;
   const userName = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+  const userEmail = user.emailAddresses?.[0]?.emailAddress || "";
+  const userInitials = userName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader className="border-b">
-        <div className="flex flex-col gap-4 px-2 py-6">
-          <div
-            className={cn(
-              "flex items-center gap-4 px-3 py-4 rounded-lg bg-sidebar-accent/50 hover:bg-sidebar-accent/70 transition-all",
-              "group-data-[collapsible=icon]:justify-center",
-              "group-data-[collapsible=icon]:px-0",
-              "group-data-[collapsible=icon]:bg-sidebar-accent/0",
-              "group-data-[collapsible=icon]:hover:bg-sidebar-accent/0",
-            )}
-          >
-            {/* Avatar / Icon */}
-            {/* <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-white text-primary-foreground shrink-0"> */}
-            <UserButton
-              afterSignOutUrl="/sign-in"
-              appearance={{
-                elements: {
-                  avatarBox: "w-20 h-20 ", // outer avatar size
-                  userButtonAvatarBox: "w-20 h-20",
-                },
-              }}
-            />
-            {/* </div> */}
-
-            {/* Text content */}
-            <div
-              className={cn(
-                "flex-1 min-w-0 transition-all",
-                "group-data-[collapsible=icon]:hidden",
-              )}
-            >
-              <p className="text-sm font-medium text-sidebar-foreground/90">
-                @{userName}
-              </p>
-            </div>
-          </div>
-        </div>
-      </SidebarHeader>
+      
 
       <SidebarContent className="px-3 py-6 flex-col gap-1 ">
         <div className="mb-2 group-data-[collapsible=icon]:hidden">
@@ -148,13 +119,89 @@ export const AppSidebar = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      {/* <SidebarFooter className="border-t px-3 py-4">
+      <SidebarFooter className="border-t px-3 py-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <div>Footer</div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuButton
+                  size="lg"
+                  className="h-12 px-4 rounded-lg data-[state=open]:bg-sidebar-accent data-[state=open]
+                                :text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors cursor-pointer"
+                >
+                  <Avatar className="h-10 w-10 rounded-lg shrink-0">
+                    <AvatarImage
+                      src={user.imageUrl || "/placeholder.svg"}
+                      alt={userName}
+                    />
+                    <AvatarFallback className="rounded-lg">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-relaxed min-w-0">
+                    <span className="truncate font-semibold text-base ">
+                      {userName}
+                    </span>
+                    <span className="truncate text-xs ">
+                      {userEmail}
+                    </span>
+                  </div>
+                </SidebarMenuButton>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-80 rounded-lg"
+                side="right"
+                align="end"
+                sideOffset={8}
+              >
+                <div className="flex items-center gap-3 px-4 py-4 bg-sidebar-accent/30 rounded-t-lg">
+                  <Avatar className="h-12 w-12 rounded-full shrink-0">
+                    <AvatarImage
+                      src={user.imageUrl || "/placeholder.svg"}
+                      alt={userName}
+                    />
+                    <AvatarFallback className="rounded-lg">
+                      {userInitials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="grid flex-1 text-left text-sm leading-relaxed min-w-0">
+                    <span className="truncate font-semibold text-base">
+                      {userName}
+                    </span>
+                    <span className="truncate text-xs ">
+                      {userEmail}
+                    </span>
+                  </div>
+                </div>
+                <div>
+                  <DropdownMenuItem
+                    className="px-3 cursor-pointer"
+                    onClick={() =>
+                      setTheme(theme === "dark" ? "light" : "dark")
+                    }
+                  >
+                    {theme === "dark" ? (
+                      <Sun className="mr-1 h-4 w-4" />
+                    ) : (
+                      <Moon className="mr-1 h-4 w-4" />
+                    )}
+                    <span>{theme === "dark" ? "Light" : "Dark"} Mode</span>
+                  </DropdownMenuItem>
+                </div>
+                <SidebarSeparator />
+                <DropdownMenuItem className="cursor-pointer px-3 ">
+                  <SignOutButton redirectUrl="/sign-in">
+                    <div className="flex">
+                      <LogOut className="mr-3 h-4 w-4" />
+                      <span>Log out</span>
+                    </div>
+                  </SignOutButton>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarMenuItem>
         </SidebarMenu>
-      </SidebarFooter> */}
+      </SidebarFooter>
     </Sidebar>
   );
 };
