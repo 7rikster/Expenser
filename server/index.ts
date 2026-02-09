@@ -30,6 +30,7 @@ app.get("/", (_, res) => {
 });
 
 app.use("/user", router.user);
+app.use("/transaction", router.transaction);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running at port ${process.env.PORT}`);

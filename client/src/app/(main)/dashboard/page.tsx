@@ -20,7 +20,7 @@ export default function Dashboard() {
 
     const fetchUserData = async () => {
       const token = await getToken();
-      if (!token) return;
+      if (!token) return;                                              
 
       const name = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
 

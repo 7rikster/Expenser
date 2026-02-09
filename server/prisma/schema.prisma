@@ -46,6 +46,7 @@ model DailyExpenseItem {
   dailyId      String
   dailyExpense DailyExpense @relation(fields: [dailyId], references: [id], onDelete: Cascade)
 
+  @@unique([dailyId, category])
   @@index([dailyId])
   @@map("dailyExpenseItems")
 }
@@ -67,14 +68,16 @@ model MonthlyExpense {
 
 model MonthlyExpenseItem {
   id             String         @id @default(uuid())
-  category       String         @unique
+  category       String
   amount         Decimal        @db.Decimal(10, 2)
   monthId        String
   monthlyExpense MonthlyExpense @relation(fields: [monthId], references: [id], onDelete: Cascade)
 
+  @@unique([monthId, category])
   @@index([monthId])
   @@map("monthlyExpenseItems")
 }
+
 
 model Transaction {
   id                String             @id @default(uuid())
