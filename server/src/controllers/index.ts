@@ -1,4 +1,5 @@
-import * as user from "./user";
-import * as transaction from "./transaction";
+import * as user from "./user/index.js";
+import * as transaction from "./transaction/index.js";
+import * as dashboard from "./dashboard/index.js";
 
-export { user, transaction };
+export { user, transaction, dashboard };

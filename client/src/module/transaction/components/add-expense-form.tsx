@@ -25,6 +25,7 @@ import { Switch } from "@/components/ui/switch";
 import {useRouter} from 'next/navigation';
 import { useState } from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
 
@@ -40,6 +41,7 @@ interface category {
 function AddExpenseForm({ categories }: { categories: category[] }) {
   const { getToken } = useAuth();
   const { isLoaded } = useUser();
+  const queryClient = useQueryClient();
 
   const router = useRouter();
   const {
@@ -96,14 +98,19 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
 
         console.log("Transaction created:", response.data);
         toast.success("Transaction added successfully!");
+        // Remove all dashboard-related queries from cache so stale data is not shown
+        queryClient.removeQueries({ queryKey: ["dashboard"] });
+        queryClient.removeQueries({ queryKey: ["transactions"] });
+        queryClient.removeQueries({ queryKey: ["monthly-trend"] });
+        queryClient.removeQueries({ queryKey: ["weekly-pattern"] });
+        reset();
+        router.push('/dashboard');
       } catch (err) {
         toast.error("Failed to create expense.");
         console.error("Error creating/fetching user:", err);
       }
       finally{
         setTransactionLoading(false);
-        reset();
-        router.push('/dashboard')
       }
   }
 

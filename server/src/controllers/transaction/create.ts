@@ -25,6 +25,8 @@ const create = async (
     }
     const todayKey = new Date().toISOString().slice(0,10);
     const cacheKey = `dashboard:${clerkUserId}:${todayKey}`;
+    const monthlyTrendCacheKey = `monthly-trend:${clerkUserId}:${new Date().toISOString().slice(0, 7)}`;
+    const weeklyPatternCacheKey = `weekly-pattern:${clerkUserId}:${todayKey}`;
     // Arcjet to rate limit this api
     
     /* 2️⃣ Find user */
@@ -169,7 +171,8 @@ const create = async (
         await Promise.all([dailyFlow(), monthlyFlow()]);
       }
       await redis.del(cacheKey);
-
+      await redis.del(monthlyTrendCacheKey);
+      await redis.del(weeklyPatternCacheKey);
       return newTransaction;
     },
     { timeout: 15000 }

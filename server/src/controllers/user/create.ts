@@ -15,7 +15,7 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
       );
     }
     const todayKey = new Date().toISOString().slice(0,10);
-    const cacheKey = `dashboard:${userId}:${todayKey}`;
+    const cacheKey = `user:${userId}:${todayKey}`;
     const cachedData = await redis.get(cacheKey);
     if(cachedData){
       return next(
@@ -37,15 +37,11 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
     });
 
     if (existingUser) {
-      const [todayExpense, thisMonthExpense] = await Promise.all([
-        getDayExpense(existingUser.id),
-        getThisMonthExpense(existingUser.id)
-      ])
-      await redis.set(cacheKey, JSON.stringify({ existingUser, todayExpense, thisMonthExpense }), "EX", 300);
+      await redis.set(cacheKey, JSON.stringify({ user:existingUser}), "EX", 300);
       return next(
         res.status(201).json({
           status: "success",
-          data: {existingUser, todayExpense, thisMonthExpense }
+          data: {user:existingUser }
         })
       );
     }
@@ -71,11 +67,11 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
         monthlyBudget: 3000,
       },
     });
-    await redis.set(cacheKey, JSON.stringify({ user, todayExpense: { total: 0, categories: [] }, thisMonthExpense: { total: 0, categories: [] } }), "EX", 300); 
+    await redis.set(cacheKey, JSON.stringify({ user }), "EX", 300); 
     return next(
       res.status(201).json({
         status: "success",
-        data: {user, todayExpense: { total: 0, categories: [] }, thisMonthExpense: { total: 0, categories: [] } }
+        data: {user}
       })
     );
   } catch (error) {
