@@ -1,6 +1,6 @@
 "use client";
 
-import { Github, BookOpen, Settings, Moon, Sun, LogOut } from "lucide-react";
+import { Github, BookOpen, Settings, Moon, Sun, LogOut, Menu } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
@@ -21,15 +21,17 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import Link from "next/link";
-import { SignOutButton, UserButton, useUser } from "@clerk/nextjs";
-import { cn } from "@/lib/utils";
+import { SignOutButton, useUser } from "@clerk/nextjs";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { X } from "lucide-react";
+import { useSidebar } from "./ui/sidebar";
 
 export const AppSidebar = () => {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const { user: session, isLoaded } = useUser();
+  const { user: session } = useUser();
+  const { toggleSidebar, isMobile } = useSidebar();
 
   useEffect(() => {
     setMounted(true);
@@ -91,11 +93,23 @@ export const AppSidebar = () => {
       
 
       <SidebarContent className="px-3 py-6 flex-col gap-1 ">
-        <div className="mb-2 group-data-[collapsible=icon]:hidden">
-          <p className="text-xs font-semibold text-sidebar-foreground/60 px-3 mb-3 uppercase tracking-widest">
+        <div className="mb-2 group-data-[collapsible=icon]:hidden flex items-center justify-between px-3">
+          <p className="text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-widest">
             Menu
           </p>
+
+          <button
+            onClick={toggleSidebar}
+            className="p-1 rounded-md hover:bg-sidebar-accent transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
+        <SidebarMenuItem className="hidden  group-data-[collapsible=icon]:flex">
+          <SidebarMenuButton className="rounded-lg transition-all duration-200 cursor-pointer text-xl" onClick={toggleSidebar}>
+          <Menu className="!h-6 !w-6 text-xl" />
+        </SidebarMenuButton>
+        </SidebarMenuItem>  
         <SidebarMenu className="gap-2">
           {navigationItems.map((item) => (
             <SidebarMenuItem key={item.title}>
@@ -119,15 +133,23 @@ export const AppSidebar = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t px-1 py-4">
+      <SidebarFooter className="border-t px-1 py-4 ">
         <SidebarMenu>
-          <SidebarMenuItem>
+          <SidebarMenuItem className="group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="h-12 px-2 rounded-lg data-[state=open]:bg-sidebar-accent data-[state=open]
-                                :text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors cursor-pointer"
+                  className="
+                    h-12 px-2 rounded-lg
+                    hover:bg-sidebar-accent/50
+                    transition-colors cursor-pointer
+                    data-[state=open]:bg-sidebar-accent
+                    data-[state=open]:text-sidebar-accent-foreground
+
+                    group-data-[collapsible=icon]:justify-center
+                    group-data-[collapsible=icon]:px-0
+                  "
                 >
                   <Avatar className="h-10 w-10 rounded-lg shrink-0">
                     <AvatarImage
@@ -138,7 +160,7 @@ export const AppSidebar = () => {
                       {userInitials}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="grid flex-1 text-left text-sm leading-relaxed min-w-0">
+                  <div className="grid flex-1 text-left text-sm leading-relaxed min-w-0 group-data-[collapsible=icon]:hidden">
                     <span className="truncate font-semibold text-base ">
                       {userName}
                     </span>

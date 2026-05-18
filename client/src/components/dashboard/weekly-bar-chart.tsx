@@ -151,9 +151,10 @@ function WeeklyBarChartComponent() {
 
   if (isLoading || !data) {
     return (
-      <Card className="border-0 shadow-sm h-full">
+      <Card className="border-0 shadow-sm h-full justify-center">
         <CardHeader>
           <CardTitle className="text-base font-semibold">Weekly Spending</CardTitle>
+          <Skeleton className="h-6 w-32 rounded-md" />
         </CardHeader>
         <CardContent>
           <Skeleton className="h-[280px] w-full rounded-lg" />
