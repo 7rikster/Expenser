@@ -199,7 +199,7 @@ function AIInsightsComponent({
   }
 
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm h-full">
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
           <div className="h-2 w-2 rounded-full bg-violet-500 animate-pulse" />

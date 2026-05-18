@@ -13,7 +13,6 @@ import { AIInsights } from "@/components/dashboard/ai-insights";
 import {
   useDashboardData,
   useMonthlyTrend,
-  useWeeklyPattern,
   useTransactionList,
   useDeleteTransaction,
   useCreateUser,
@@ -77,9 +76,8 @@ export default function Dashboard() {
   // React Query hooks
   const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardData();
   const { data: trendData, isLoading: isTrendLoading } = useMonthlyTrend();
-  const { data: weeklyData, isLoading: isWeeklyLoading } = useWeeklyPattern();
+
   const { data: transactionData, isLoading: isTransactionsLoading } = useTransactionList({
-    month: selectedMonth,
     category: selectedCategory || undefined,
     page: 1,
     limit: 10,
@@ -89,25 +87,24 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
       {/* Summary Cards */}
-      <SummaryCards data={dashboardData} isLoading={isDashboardLoading} />
+      
 
       {/* Filters */}
       {/* <DashboardFilters /> */}
 
       {/* Charts Row: Trend + Pie */}
-      <div className="grid gap-6 lg:grid-cols-7">
-        <div className="lg:col-span-4">
+      <div className="grid gap-6 lg:grid-cols-10">
+        <div className="lg:col-span-6 flex flex-col gap-4">
+          <SummaryCards data={dashboardData} isLoading={isDashboardLoading} />
           <Suspense fallback={<ChartSkeleton />}>
             <ExpenseTrendChart data={trendData} isLoading={isTrendLoading} />
           </Suspense>
         </div>
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4 flex flex-col gap-4">
           <Suspense fallback={<ChartSkeleton />}>
-            <CategoryPieChart
-              categories={dashboardData?.thisMonthExpense.categories}
-              isLoading={isDashboardLoading}
-            />
+            <CategoryPieChart />
           </Suspense>
+          <BudgetProgress data={dashboardData} isLoading={isDashboardLoading} />
         </div>
       </div>
 
@@ -115,11 +112,16 @@ export default function Dashboard() {
       <div className="grid gap-6 lg:grid-cols-7">
         <div className="lg:col-span-4">
           <Suspense fallback={<ChartSkeleton />}>
-            <WeeklyBarChart data={weeklyData} isLoading={isWeeklyLoading} />
+            <WeeklyBarChart />
           </Suspense>
         </div>
         <div className="lg:col-span-3">
-          <BudgetProgress data={dashboardData} isLoading={isDashboardLoading} />
+          {/* AI Insights */}
+          <AIInsights
+            dashboardData={dashboardData}
+            trendData={trendData}
+            isLoading={isDashboardLoading || isTrendLoading}
+          />
         </div>
       </div>
 
@@ -133,12 +135,7 @@ export default function Dashboard() {
         />
       </Suspense>
 
-      {/* AI Insights */}
-      <AIInsights
-        dashboardData={dashboardData}
-        trendData={trendData}
-        isLoading={isDashboardLoading || isTrendLoading}
-      />
+      
     </div>
   );
 }

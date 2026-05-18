@@ -33,8 +33,9 @@ export interface MonthlyTrendPoint {
 }
 
 export interface WeeklyPatternPoint {
+  date: string;
   day: string;
-  total: number;
+  amount: number;
 }
 
 export interface Transaction {

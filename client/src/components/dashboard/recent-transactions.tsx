@@ -121,7 +121,7 @@ function RecentTransactionsComponent({
   }
 
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm gap-3">
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-semibold">Recent Transactions</CardTitle>
@@ -147,7 +147,7 @@ function RecentTransactionsComponent({
             {/* ── Bulk-action bar ─────────────────────────────── */}
             <div
               className={`
-                flex items-center justify-between rounded-lg px-4 py-2.5 mb-3
+                flex items-center justify-between rounded-lg px-4 py-2 mb-3
                 bg-destructive/10 border border-destructive/20
                 transition-all duration-300 ease-in-out origin-top
                 ${

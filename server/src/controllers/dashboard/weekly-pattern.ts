@@ -1,10 +1,27 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
 import redis from "src/lib/redis";
+import { toLocalDateString, getWeekEnd, getWeekStart } from "src/utils/functions";
 
 /**
- * GET /dashboard/weekly-pattern
- * Returns current month's expenses grouped by day-of-week for a bar chart.
+ * Formats a Date as YYYY-MM-DD using LOCAL date parts (not UTC).
+ * This avoids timezone-related date shifts.
+ */
+
+
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/**
+ * GET /dashboard/weekly-pattern?weekStart=YYYY-MM-DD
+ * Returns day-wise expense totals for a specific calendar week (Mon-Sun).
+ * Defaults to the current week if no weekStart param is provided.
+ *
+ * Response shape:
+ * [
+ *   { "date": "2026-05-12", "day": "Mon", "amount": 240 },
+ *   { "date": "2026-05-13", "day": "Tue", "amount": 0 },
+ *   ...
+ * ]
  */
 const getWeeklyPattern = async (
   req: Request,
@@ -26,23 +43,41 @@ const getWeeklyPattern = async (
       return next(res.status(404).json({ status: "error", msg: "User not found" }));
     }
 
-    const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    // Determine the week start date
+    let weekStart: Date;
+    const weekStartParam = req.query.weekStart as string | undefined;
 
-    const cacheKey = `weekly-pattern:${clerkUserId}:${now.toISOString().slice(0, 10)}`;
+    if (weekStartParam) {
+      // Parse as local date (not UTC) by using the Date(year, month, day) constructor
+      const [y, m, d] = weekStartParam.split("-").map(Number);
+      const parsed = new Date(y, m - 1, d);
+      if (!isNaN(parsed.getTime())) {
+        weekStart = getWeekStart(parsed);
+      } else {
+        weekStart = getWeekStart(new Date());
+      }
+    } else {
+      weekStart = getWeekStart(new Date());
+    }
+
+    const weekEnd = getWeekEnd(weekStart);
+    const weekStartKey = toLocalDateString(weekStart);
+
+    // Check cache
+    const cacheKey = `weekly-spending:${clerkUserId}:${weekStartKey}`;
     const cached = await redis.get(cacheKey);
     if (cached) {
       return next(res.status(200).json({ status: "success", data: JSON.parse(cached) }));
     }
 
+    // Fetch all expenses in the week range
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: user.id,
         type: "EXPENSE",
         date: {
-          gte: monthStart,
-          lt: nextMonth,
+          gte: weekStart,
+          lt: weekEnd,
         },
       },
       select: {
@@ -51,23 +86,31 @@ const getWeeklyPattern = async (
       },
     });
 
-    const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    // Build a map of date -> total amount (using local date strings)
     const dayTotals: Record<string, number> = {};
-    dayNames.forEach((d) => (dayTotals[d] = 0));
-
     transactions.forEach((t) => {
-      const dayName = dayNames[new Date(t.date).getDay()];
-      dayTotals[dayName] += Number(t.amount);
+      const dateKey = toLocalDateString(new Date(t.date));
+      dayTotals[dateKey] = (dayTotals[dateKey] || 0) + Number(t.amount);
     });
 
-    const pattern = dayNames.map((day) => ({
-      day,
-      total: Math.round(dayTotals[day] * 100) / 100,
-    }));
+    // Build the 7-day response array (Mon-Sun)
+    const result = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + i);
+      const dateKey = toLocalDateString(d);
 
-    await redis.set(cacheKey, JSON.stringify(pattern), "EX", 300);
+      result.push({
+        date: dateKey,
+        day: DAY_LABELS[i],
+        amount: Math.round((dayTotals[dateKey] || 0) * 100) / 100,
+      });
+    }
 
-    return next(res.status(200).json({ status: "success", data: pattern }));
+    // Cache for 5 minutes
+    await redis.set(cacheKey, JSON.stringify(result), "EX", 300);
+
+    return next(res.status(200).json({ status: "success", data: result }));
   } catch (error) {
     console.error("Weekly pattern error:", error);
     return next(res.status(500).json({ status: "error", msg: "Internal server error" }));

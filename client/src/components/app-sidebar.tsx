@@ -119,14 +119,14 @@ export const AppSidebar = () => {
           ))}
         </SidebarMenu>
       </SidebarContent>
-      <SidebarFooter className="border-t px-3 py-4">
+      <SidebarFooter className="border-t px-1 py-4">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size="lg"
-                  className="h-12 px-4 rounded-lg data-[state=open]:bg-sidebar-accent data-[state=open]
+                  className="h-12 px-2 rounded-lg data-[state=open]:bg-sidebar-accent data-[state=open]
                                 :text-sidebar-accent-foreground hover:bg-sidebar-accent/50 transition-colors cursor-pointer"
                 >
                   <Avatar className="h-10 w-10 rounded-lg shrink-0">

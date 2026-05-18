@@ -88,3 +88,33 @@ export const getTopCategoriesWithOthersAndPercentage = (
 
 
 }
+
+export function toLocalDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * Returns the Monday (start) of the week for a given date.
+ * Uses ISO week convention: Monday = start of week.
+ */
+export function getWeekStart(date: Date): Date {
+  const d = new Date(date);
+  const day = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const diff = day === 0 ? -6 : 1 - day; // Shift so Monday = 0
+  d.setDate(d.getDate() + diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+/**
+ * Returns the day after Sunday (exclusive end) for a given week start (Monday).
+ */
+export function getWeekEnd(weekStart: Date): Date {
+  const d = new Date(weekStart);
+  d.setDate(d.getDate() + 7); // exclusive end (Monday of next week)
+  d.setHours(0, 0, 0, 0);
+  return d;
+}

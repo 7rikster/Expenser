@@ -213,10 +213,47 @@ const deleteTransaction = async (
     /* ── 6. Clear cache ──────────────────────────────────────── */
     const todayKey = new Date().toISOString().slice(0, 10);
     const monthlyTrendCacheKey = `monthly-trend:${clerkUserId}:${new Date().toISOString().slice(0, 7)}`;
-    const weeklyPatternCacheKey = `weekly-pattern:${clerkUserId}:${todayKey}`;
     await redis.del(`dashboard:${clerkUserId}:${todayKey}`);
     await redis.del(monthlyTrendCacheKey);
-    await redis.del(weeklyPatternCacheKey);
+    let cursor = "0";
+    const pattern = `weekly-spending:${clerkUserId}:*`;
+    do {
+      const result = await redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100
+      );
+
+      cursor = result[0];
+
+      const keys = result[1];
+
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } while (cursor !== "0");
+
+    let cursor1 = "0";
+    const pattern1 = `category-breakdown:${clerkUserId}:*`;
+    do {
+      const result = await redis.scan(
+        cursor1,
+        "MATCH",
+        pattern1,
+        "COUNT",
+        100
+      );
+
+      cursor1 = result[0];
+
+      const keys = result[1];
+
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } while (cursor1 !== "0");
 
     return next(
       res.status(200).json({

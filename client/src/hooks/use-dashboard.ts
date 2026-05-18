@@ -10,6 +10,7 @@ import type {
   WeeklyPatternPoint,
   TransactionListResponse,
   ApiResponse,
+  ExpenseSummary,
 } from "@/lib/types";
 
 /**
@@ -57,13 +58,29 @@ export function useMonthlyTrend() {
   });
 }
 
-// ─── Weekly Pattern ──────────────────────────────────────────
-export function useWeeklyPattern() {
+// ─── Weekly Pattern (by week) ────────────────────────────────
+export function useWeeklyPattern(weekStart: string) {
   const authFetch = useAuthApi();
 
   return useQuery<WeeklyPatternPoint[]>({
-    queryKey: ["weekly-pattern"],
-    queryFn: () => authFetch<WeeklyPatternPoint[]>("/dashboard/weekly-pattern"),
+    queryKey: ["weekly-pattern", weekStart],
+    queryFn: () =>
+      authFetch<WeeklyPatternPoint[]>("/dashboard/weekly-pattern", {
+        params: { weekStart },
+      }),
+  });
+}
+
+// ─── Category Breakdown (by month) ──────────────────────────
+export function useCategoryBreakdown(month: string) {
+  const authFetch = useAuthApi();
+
+  return useQuery<ExpenseSummary>({
+    queryKey: ["category-breakdown", month],
+    queryFn: () =>
+      authFetch<ExpenseSummary>("/dashboard/category-breakdown", {
+        params: { month },
+      }),
   });
 }
 
@@ -92,10 +109,11 @@ export function useDeleteTransaction() {
     mutationFn: (ids: string[]) =>
       authFetch("/transaction/bulk", { method: "DELETE", data: { ids } }),
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ["transactions"] });
-      queryClient.removeQueries({ queryKey: ["dashboard"] });
-      queryClient.removeQueries({ queryKey: ["monthly-trend"] });
-      queryClient.removeQueries({ queryKey: ["weekly-pattern"] });
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["category-breakdown"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-pattern"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["monthly-trend"] });
     },
   });
 }

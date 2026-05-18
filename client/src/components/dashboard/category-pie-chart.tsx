@@ -1,16 +1,20 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import type { CategoryBreakdown } from "@/lib/types";
 import { defaultCategories } from "@/lib/data";
-
-interface CategoryPieChartProps {
-  categories: CategoryBreakdown[] | undefined;
-  isLoading: boolean;
-}
+import { useCategoryBreakdown } from "@/hooks/use-dashboard";
+import { useDashboardStore } from "@/store/dashboard-store";
 
 // Color palette for pie slices
 const COLORS = [
@@ -34,6 +38,24 @@ function getCategoryName(categoryId: string): string {
   return cat?.name || categoryId;
 }
 
+/**
+ * Generate the last 12 months as selectable options.
+ * Returns array of { value: "YYYY-MM", label: "Month YYYY" }.
+ */
+function generateMonthOptions(): { value: string; label: string }[] {
+  const options: { value: string; label: string }[] = [];
+  const now = new Date();
+
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    const label = d.toLocaleString("default", { month: "long", year: "numeric" });
+    options.push({ value, label });
+  }
+
+  return options;
+}
+
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const { category, amount, percentage } = payload[0].payload;
@@ -49,15 +71,27 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-function CategoryPieChartComponent({ categories, isLoading }: CategoryPieChartProps) {
+function CategoryPieChartComponent() {
+  const monthOptions = useMemo(() => generateMonthOptions(), []);
+  const { selectedMonth: pieMonth, setSelectedMonth: setPieMonth } = useDashboardStore();
+
+  const { data: expenseData, isLoading } = useCategoryBreakdown(pieMonth);
+  const categories = expenseData?.categories;
+
+  // Find the label for the currently selected month
+  const selectedLabel = monthOptions.find((o) => o.value === pieMonth)?.label ?? "This month";
+
   if (isLoading || !categories) {
     return (
       <Card className="border-0 shadow-sm">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
+        <CardHeader className="pb-2">
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
+            <Skeleton className="h-9 w-[160px] rounded-md" />
+          </div>
         </CardHeader>
         <CardContent>
-          <Skeleton className="h-[280px] w-full rounded-lg" />
+          <Skeleton className="h-[180px] w-full rounded-lg" />
         </CardContent>
       </Card>
     );
@@ -67,10 +101,24 @@ function CategoryPieChartComponent({ categories, isLoading }: CategoryPieChartPr
     return (
       <Card className="border-0 shadow-sm">
         <CardHeader className="pb-2">
-          <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
-          <p className="text-sm text-muted-foreground">This month&apos;s spending by category</p>
+          <div className="flex items-center justify-between gap-2">
+            <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
+            <Select value={pieMonth} onValueChange={setPieMonth}>
+              <SelectTrigger className="w-[160px] h-9 text-sm">
+                <SelectValue placeholder="Select month" />
+              </SelectTrigger>
+              <SelectContent>
+                {monthOptions.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <p className="text-sm text-muted-foreground">{selectedLabel}&apos;s spending by category</p>
         </CardHeader>
-        <CardContent className="flex items-center justify-center h-[280px]">
+        <CardContent className="flex items-center justify-center h-[180px]">
           <p className="text-muted-foreground text-sm">No expense data yet</p>
         </CardContent>
       </Card>
@@ -80,12 +128,26 @@ function CategoryPieChartComponent({ categories, isLoading }: CategoryPieChartPr
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
-        <p className="text-sm text-muted-foreground">This month&apos;s spending by category</p>
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
+          <Select value={pieMonth} onValueChange={setPieMonth}>
+            <SelectTrigger className="w-[160px] h-9 text-sm">
+              <SelectValue placeholder="Select month" />
+            </SelectTrigger>
+            <SelectContent>
+              {monthOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="text-sm text-muted-foreground">{selectedLabel}&apos;s spending by category</p>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex flex-col sm:flex-row flex-wrap items-center gap-4">
-          <div className="h-[200px] w-[200px] sm:h-[200px] sm:w-[200px] shrink-0">
+          <div className="h-[200px] w-[200px] sm:h-[180px] sm:w-[160px] flex-1">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -117,7 +179,7 @@ function CategoryPieChartComponent({ categories, isLoading }: CategoryPieChartPr
                   style={{ backgroundColor: getCategoryColor(cat.category, index) }}
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium">{getCategoryName(cat.category)}</p>
+                  <p className="text-sm font-medium truncate">{getCategoryName(cat.category)}</p>
                 </div>
                 <p className="text-sm font-semibold tabular-nums shrink-0">
                   {cat.percentage}%

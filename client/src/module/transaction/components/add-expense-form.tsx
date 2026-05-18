@@ -99,10 +99,12 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
         console.log("Transaction created:", response.data);
         toast.success("Transaction added successfully!");
         // Remove all dashboard-related queries from cache so stale data is not shown
-        queryClient.removeQueries({ queryKey: ["dashboard"] });
-        queryClient.removeQueries({ queryKey: ["transactions"] });
-        queryClient.removeQueries({ queryKey: ["monthly-trend"] });
-        queryClient.removeQueries({ queryKey: ["weekly-pattern"] });
+        queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+        queryClient.invalidateQueries({ queryKey: ["transactions"] });
+        queryClient.invalidateQueries({ queryKey: ["monthly-trend"] });
+        queryClient.invalidateQueries({ queryKey: ["weekly-pattern"] });
+        queryClient.invalidateQueries({ queryKey: ["category-breakdown"] });
+
         reset();
         router.push('/dashboard');
       } catch (err) {

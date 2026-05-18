@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
-import { calculateNextRecurringDate, startOfDay, startOfMonth } from "src/utils/functions";
+import { calculateNextRecurringDate, startOfDay, startOfMonth, getWeekStart, toLocalDateString } from "src/utils/functions";
 import { Prisma as P } from "../../../generated/prisma/client";
 import redis from "src/lib/redis";
 
@@ -23,10 +23,8 @@ const create = async (
         })
       );
     }
-    const todayKey = new Date().toISOString().slice(0,10);
-    const cacheKey = `dashboard:${clerkUserId}:${todayKey}`;
-    const monthlyTrendCacheKey = `monthly-trend:${clerkUserId}:${new Date().toISOString().slice(0, 7)}`;
-    const weeklyPatternCacheKey = `weekly-pattern:${clerkUserId}:${todayKey}`;
+    
+
     // Arcjet to rate limit this api
     
     /* 2️⃣ Find user */
@@ -72,6 +70,19 @@ const create = async (
 
     const day = startOfDay(expenseDate);
     const month = startOfMonth(expenseDate);
+
+    const monthStart = new Date(
+      expenseDate.getFullYear(),
+      expenseDate.getMonth(),
+      1
+    );
+    const weekStart = toLocalDateString(getWeekStart(expenseDate));
+    const todayKey = new Date().toISOString().slice(0,10);
+    const cacheKey = `dashboard:${clerkUserId}:${todayKey}`;
+    const monthlyTrendCacheKey = `monthly-trend:${clerkUserId}:${new Date().toISOString().slice(0, 7)}`;
+    const weeklyPatternCacheKey = `weekly-spending:${clerkUserId}:${weekStart}`;
+    const categoryBreakdown = `category-breakdown:${clerkUserId}:${monthStart}`;
+    console.log("weekStart: ",weekStart);
 
     /* 4️⃣ Transaction */
     const transaction = await prisma.$transaction(async (tx) => {
@@ -173,6 +184,7 @@ const create = async (
       await redis.del(cacheKey);
       await redis.del(monthlyTrendCacheKey);
       await redis.del(weeklyPatternCacheKey);
+      await redis.del(categoryBreakdown);
       return newTransaction;
     },
     { timeout: 15000 }

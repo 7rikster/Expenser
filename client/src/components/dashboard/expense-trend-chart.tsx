@@ -48,7 +48,7 @@ function ExpenseTrendChartComponent({ data, isLoading }: ExpenseTrendChartProps)
   }
 
   return (
-    <Card className="border-0 shadow-sm">
+    <Card className="border-0 shadow-sm h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold">Monthly Expense Trend</CardTitle>
         <p className="text-sm text-muted-foreground">Last 6 months spending overview</p>

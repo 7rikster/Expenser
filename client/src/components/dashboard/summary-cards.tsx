@@ -20,8 +20,8 @@ interface SummaryCardsProps {
 function SummaryCardsComponent({ data, isLoading }: SummaryCardsProps) {
   if (isLoading || !data) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[...Array(3)].map((_, i) => (
           <Card key={i} className="border-0 shadow-sm">
             <CardContent className="p-6">
               <Skeleton className="h-4 w-24 mb-3" />
@@ -76,27 +76,27 @@ function SummaryCardsComponent({ data, isLoading }: SummaryCardsProps) {
       iconBg: "bg-violet-500/10 dark:bg-violet-500/20",
       iconColor: "text-violet-600 dark:text-violet-400",
     },
-    {
-      title: "vs Last Month",
-      value: `${monthChange >= 0 ? "+" : ""}${monthChange.toFixed(1)}%`,
-      subtitle:
-        lastMonthSpent > 0
-          ? `₹${lastMonthSpent.toLocaleString("en-IN", { minimumFractionDigits: 2 })} last month`
-          : "No data",
-      icon: monthChange <= 0 ? TrendingDown : TrendingUp,
-      iconBg:
-        monthChange <= 0
-          ? "bg-emerald-500/10 dark:bg-emerald-500/20"
-          : "bg-amber-500/10 dark:bg-amber-500/20",
-      iconColor:
-        monthChange <= 0
-          ? "text-emerald-600 dark:text-emerald-400"
-          : "text-amber-600 dark:text-amber-400",
-    },
+    // {
+    //   title: "vs Last Month",
+    //   value: `${monthChange >= 0 ? "+" : ""}${monthChange.toFixed(1)}%`,
+    //   subtitle:
+    //     lastMonthSpent > 0
+    //       ? `₹${lastMonthSpent.toLocaleString("en-IN", { minimumFractionDigits: 2 })} last month`
+    //       : "No data",
+    //   icon: monthChange <= 0 ? TrendingDown : TrendingUp,
+    //   iconBg:
+    //     monthChange <= 0
+    //       ? "bg-emerald-500/10 dark:bg-emerald-500/20"
+    //       : "bg-amber-500/10 dark:bg-amber-500/20",
+    //   iconColor:
+    //     monthChange <= 0
+    //       ? "text-emerald-600 dark:text-emerald-400"
+    //       : "text-amber-600 dark:text-amber-400",
+    // },
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {cards.map((card) => (
         <Card
           key={card.title}
