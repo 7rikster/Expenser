@@ -1,9 +1,17 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { DashboardData } from "@/lib/types";
+import { Button } from "../ui/button";
+import { Loader2, SquarePen } from "lucide-react";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { Label } from "../ui/label";
+import { Input } from "../ui/input";
+import { Field, FieldGroup } from "../ui/field";
+import { useUpdateBudget } from "@/hooks/use-dashboard";
+import { toast } from "sonner";
 
 interface BudgetProgressProps {
   data: DashboardData | undefined;
@@ -19,6 +27,7 @@ function ProgressBar({
   spent: number;
   budget: number;
 }) {
+  
   const percentage = budget > 0 ? Math.min((spent / budget) * 100, 100) : 0;
   const remaining = Math.max(budget - spent, 0);
 
@@ -55,11 +64,18 @@ function ProgressBar({
 }
 
 function BudgetProgressComponent({ data, isLoading }: BudgetProgressProps) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [budgetData, setBudgetData] = useState({
+    dailyBudget: 0,
+    monthlyBudget: 0,
+  });
+  const {mutate: updateBudget, isPending} = useUpdateBudget();
   if (isLoading || !data) {
     return (
       <Card className="border-0 shadow-sm">
-        <CardHeader>
+        <CardHeader className="flex flew-row justify-between">
           <CardTitle className="text-base font-semibold">Budget Tracking</CardTitle>
+          <Skeleton className="h-9 w-16 rounded-md" />
         </CardHeader>
         <CardContent className="space-y-6">
           <Skeleton className="h-16 w-full rounded-md" />
@@ -73,11 +89,102 @@ function BudgetProgressComponent({ data, isLoading }: BudgetProgressProps) {
   const monthlyBudget = Number(data.user.monthlyBudget || 0);
   const todaySpent = Number(data.todayExpense.total);
   const monthSpent = Number(data.thisMonthExpense.total);
+  
+  function handleEditBudget() {
+    if(budgetData.dailyBudget === 0 || budgetData.monthlyBudget === 0){
+      toast.error("Please enter a valid budget.");
+      return;
+    }
+    try{
+      updateBudget({
+        dailyBudget: budgetData.dailyBudget,
+        monthlyBudget: budgetData.monthlyBudget,
+      }, {
+        onSuccess: () => {
+          setIsDialogOpen(false);
+          toast.success("Budget updated successfully.")
+        },
+      })
+    }
+    catch(err){
+      toast.error("Failed to update budget. Try again later.");
+    }
+  }
 
   return (
     <Card className="border-0 shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Budget Tracking</CardTitle>
+        <div className="flex justify-between">
+          <CardTitle className="text-base font-semibold">Budget Tracking</CardTitle>
+          <Dialog
+            open={isDialogOpen}
+            onOpenChange={() => {
+              setIsDialogOpen((prev) => !prev);
+              setBudgetData({
+                dailyBudget: dailyBudget,
+                monthlyBudget: monthlyBudget,
+              });
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" className="cursor-pointer"><SquarePen className="h-4 w-4" /></Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-sm">
+              <DialogHeader>
+                <DialogTitle>Edit budget</DialogTitle>
+                 <DialogDescription>
+                  Make changes to your budget here. Click save when you&apos;re
+                  done.
+                </DialogDescription>
+              </DialogHeader>
+              <FieldGroup>
+
+                <Field>
+                  <Label htmlFor="daily">
+                    Daily Budget
+                  </Label>
+                  <Input
+                    id="daily"
+                    type="number"
+                    value={budgetData.dailyBudget}
+                    onChange={(event) =>
+                      setBudgetData((prev) => ({
+                        ...prev,
+                        dailyBudget: Number(event.target.value),
+                      }))
+                    }
+                    className="col-span-3"
+                    />
+                </Field>
+                <Field>
+                  <Label htmlFor="monthly">
+                    Monthly Budget
+                  </Label>
+                  <Input
+                    id="monthly"
+                    type="number"
+                    value={budgetData.monthlyBudget}
+                    onChange={(event) =>
+                      setBudgetData((prev) => ({
+                        ...prev,
+                        monthlyBudget: Number(event.target.value),
+                      }))
+                    }
+                    className="col-span-3"
+                    />
+                </Field>
+              </FieldGroup>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant = "outline" className="cursor-pointer" disabled={isPending}>Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleEditBudget} className="cursor-pointer" disabled={isPending}>
+                  {isPending ? <span className="px-2"><Loader2 className="h-4 w-4 animate-spin text-white"/></span> : "Save"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
         <p className="text-sm text-muted-foreground">Daily and monthly budget usage</p>
       </CardHeader>
       <CardContent className="space-y-6 pt-2">

@@ -131,7 +131,7 @@ function CategoryPieChartComponent() {
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base font-semibold">Category Breakdown</CardTitle>
           <Select value={pieMonth} onValueChange={setPieMonth}>
-            <SelectTrigger className="w-[160px] h-9 text-sm">
+            <SelectTrigger className="w-[160px] h-9 text-sm cursor-pointer">
               <SelectValue placeholder="Select month" />
             </SelectTrigger>
             <SelectContent>
