@@ -15,17 +15,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Trash2, X, ArrowRight } from "lucide-react";
+import { Pencil, Trash2, X, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { defaultCategories } from "@/lib/data";
 import type { Transaction } from "@/lib/types";
 import { toast } from "sonner";
+import { EditTransactionDialog } from "@/components/transactions/edit-transaction-dialog";
 
 interface RecentTransactionsProps {
   transactions: Transaction[] | undefined;
   isLoading: boolean;
   onBulkDelete: (ids: string[]) => Promise<any>;
+  onUpdate: (id: string, data: { description?: string; amount?: number; category?: string }) => Promise<any>;
   isDeleting: boolean;
+  isUpdating: boolean;
 }
 
 function getCategoryName(categoryId: string): string {
@@ -42,9 +45,13 @@ function RecentTransactionsComponent({
   transactions,
   isLoading,
   onBulkDelete,
+  onUpdate,
   isDeleting,
+  isUpdating,
 }: RecentTransactionsProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const allVisibleIds = transactions?.map((tx) => tx.id) ?? [];
   const allSelected =
@@ -101,6 +108,22 @@ function RecentTransactionsComponent({
     );
   };
 
+  const handleEdit = useCallback((tx: Transaction) => {
+    setEditingTransaction(tx);
+    setEditDialogOpen(true);
+  }, []);
+
+  const handleSave = async (
+    id: string,
+    data: { description?: string; amount?: number; category?: string },
+  ) => {
+    await toast.promise(onUpdate(id, data), {
+      loading: "Saving changes...",
+      success: "Transaction updated",
+      error: "Failed to update transaction",
+    });
+  };
+
   const clearSelection = () => setSelectedIds(new Set());
 
   if (isLoading) {
@@ -121,166 +144,187 @@ function RecentTransactionsComponent({
   }
 
   return (
-    <Card className="border-0 shadow-sm gap-3">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-semibold">Recent Transactions</CardTitle>
-          <Link href="/transactions">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer"
-            >
-              View All
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        </div>
-      </CardHeader>
-      <CardContent className="pt-0">
-        {!transactions || transactions.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <p className="text-muted-foreground text-sm">No transactions found</p>
+    <>
+      <Card className="border-0 shadow-sm gap-3">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-base font-semibold">Recent Transactions</CardTitle>
+            <Link href="/transactions">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground cursor-pointer"
+              >
+                View All
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
           </div>
-        ) : (
-          <>
-            {/* ── Bulk-action bar ─────────────────────────────── */}
-            <div
-              className={`
-                flex items-center justify-between rounded-lg px-4 py-2 mb-3
-                bg-destructive/10 border border-destructive/20
-                transition-all duration-300 ease-in-out origin-top
-                ${
-                  someSelected
-                    ? "opacity-100 max-h-16 scale-y-100"
-                    : "opacity-0 max-h-0 scale-y-0 py-0 mb-0 overflow-hidden border-0"
-                }
-              `}
-            >
-              <div className="flex items-center gap-2 text-sm font-medium text-destructive">
-                <span>
-                  {selectedIds.size} selected
-                </span>
+        </CardHeader>
+        <CardContent className="pt-0">
+          {!transactions || transactions.length === 0 ? (
+            <div className="flex items-center justify-center py-12">
+              <p className="text-muted-foreground text-sm">No transactions found</p>
+            </div>
+          ) : (
+            <>
+              {/* ── Bulk-action bar ─────────────────────────────── */}
+              <div
+                className={`
+                  flex items-center justify-between rounded-lg px-4 py-2 mb-3
+                  bg-destructive/10 border border-destructive/20
+                  transition-all duration-300 ease-in-out origin-top
+                  ${
+                    someSelected
+                      ? "opacity-100 max-h-16 scale-y-100"
+                      : "opacity-0 max-h-0 scale-y-0 py-0 mb-0 overflow-hidden border-0"
+                  }
+                `}
+              >
+                <div className="flex items-center gap-2 text-sm font-medium text-destructive">
+                  <span>
+                    {selectedIds.size} selected
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-foreground cursor-pointer"
+                    onClick={clearSelection}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
                 <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 text-muted-foreground hover:text-foreground cursor-pointer"
-                  onClick={clearSelection}
+                  variant="destructive"
+                  size="sm"
+                  className="gap-1.5 cursor-pointer"
+                  onClick={handleBulkDelete}
+                  disabled={isDeleting}
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ""}
                 </Button>
               </div>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="gap-1.5 cursor-pointer"
-                onClick={handleBulkDelete}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-                Delete{selectedIds.size > 1 ? ` (${selectedIds.size})` : ""}
-              </Button>
-            </div>
 
-            {/* ── Table ───────────────────────────────────────── */}
-            <div className="rounded-lg border overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/50 hover:bg-muted/50">
-                    <TableHead className="w-[40px]">
-                      <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={toggleAll}
-                        aria-label="Select all transactions"
-                        className="cursor-pointer"
-                      />
-                    </TableHead>
-                    <TableHead className="font-semibold">Category</TableHead>
-                    <TableHead className="font-semibold">Description</TableHead>
-                    <TableHead className="font-semibold">Date</TableHead>
-                    <TableHead className="font-semibold text-right">Amount</TableHead>
-                    <TableHead className="font-semibold text-center w-[80px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((tx) => {
-                    const isChecked = selectedIds.has(tx.id);
-                    return (
-                      <TableRow
-                        key={tx.id}
-                        className={`group transition-colors ${
-                          isChecked
-                            ? "bg-destructive/5 hover:bg-destructive/10"
-                            : ""
-                        }`}
-                      >
-                        <TableCell>
-                          <Checkbox
-                            checked={isChecked}
-                            onCheckedChange={() => toggleOne(tx.id)}
-                            aria-label={`Select transaction ${tx.description || tx.category}`}
-                            className="cursor-pointer"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div
-                              className="h-2.5 w-2.5 rounded-full shrink-0"
-                              style={{ backgroundColor: getCategoryColor(tx.category) }}
+              {/* ── Table ───────────────────────────────────────── */}
+              <div className="rounded-lg border overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50 hover:bg-muted/50">
+                      <TableHead className="w-[40px]">
+                        <Checkbox
+                          checked={allSelected}
+                          onCheckedChange={toggleAll}
+                          aria-label="Select all transactions"
+                          className="cursor-pointer"
+                        />
+                      </TableHead>
+                      <TableHead className="font-semibold">Category</TableHead>
+                      <TableHead className="font-semibold">Description</TableHead>
+                      <TableHead className="font-semibold">Date</TableHead>
+                      <TableHead className="font-semibold text-right">Amount</TableHead>
+                      <TableHead className="font-semibold text-center w-[100px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {transactions.map((tx) => {
+                      const isChecked = selectedIds.has(tx.id);
+                      return (
+                        <TableRow
+                          key={tx.id}
+                          className={`group transition-colors ${
+                            isChecked
+                              ? "bg-destructive/5 hover:bg-destructive/10"
+                              : ""
+                          }`}
+                        >
+                          <TableCell>
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={() => toggleOne(tx.id)}
+                              aria-label={`Select transaction ${tx.description || tx.category}`}
+                              className="cursor-pointer"
                             />
-                            <span className="font-medium text-sm">
-                              {getCategoryName(tx.category)}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <div
+                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                style={{ backgroundColor: getCategoryColor(tx.category) }}
+                              />
+                              <span className="font-medium text-sm">
+                                {getCategoryName(tx.category)}
+                              </span>
+                              {tx.isRecurring && (
+                                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                  Recurring
+                                </Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
+                            {tx.description || "—"}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {format(new Date(tx.date), "MMM dd, yyyy")}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <span
+                              className={`text-sm font-semibold tabular-nums ${
+                                tx.type === "INCOME"
+                                  ? "text-green-500"
+                                  : "text-red-500 dark:text-red-400"
+                              }`}
+                            >
+                              {tx.type === "INCOME" ? "+" : "-"}₹
+                              {Number(tx.amount).toLocaleString("en-IN", {
+                                minimumFractionDigits: 2,
+                              })}
                             </span>
-                            {tx.isRecurring && (
-                              <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                Recurring
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground max-w-[200px] truncate">
-                          {tx.description || "—"}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {format(new Date(tx.date), "MMM dd, yyyy")}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <span
-                            className={`text-sm font-semibold tabular-nums ${
-                              tx.type === "INCOME"
-                                ? "text-green-500"
-                                : "text-red-500 dark:text-red-400"
-                            }`}
-                          >
-                            {tx.type === "INCOME" ? "+" : "-"}₹
-                            {Number(tx.amount).toLocaleString("en-IN", {
-                              minimumFractionDigits: 2,
-                            })}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-center">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
-                            onClick={() => handleSingleDelete(tx.id)}
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary cursor-pointer"
+                                onClick={() => handleEdit(tx)}
+                                aria-label="Edit transaction"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive cursor-pointer"
+                                onClick={() => handleSingleDelete(tx.id)}
+                                disabled={isDeleting}
+                                aria-label="Delete transaction"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </>
+          )}
+        </CardContent>
+      </Card>
 
-
-          </>
-        )}
-      </CardContent>
-    </Card>
+      {/* ── Edit Dialog ────────────────────────────────────── */}
+      <EditTransactionDialog
+        transaction={editingTransaction}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        onSave={handleSave}
+        isSaving={isUpdating}
+      />
+    </>
   );
 }
 

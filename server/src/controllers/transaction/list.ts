@@ -1,10 +1,15 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
+import redis from "src/lib/redis";
+
+const CACHE_TTL = 300; // 5 minutes
 
 /**
  * GET /transaction/list
  * Paginated transaction list with optional filters:
- *   ?month=2026-03&category=food&page=1&limit=10&type=EXPENSE
+ *   ?month=2026-03&category=food&page=1&limit=10&type=EXPENSE&search=coffee&sort=latest
+ *
+ * Results are cached in Redis keyed by user + filter combination.
  */
 const list = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -25,33 +30,65 @@ const list = async (req: Request, res: Response, next: NextFunction) => {
     const page = Math.max(1, parseInt(req.query.page as string) || 1);
     const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 10));
     const skip = (page - 1) * limit;
+    const month = (req.query.month as string) || "";
+    const category = (req.query.category as string) || "";
+    const type = (req.query.type as string) || "";
+    const search = (req.query.search as string) || "";
+    const sort = (req.query.sort as string) || "latest";
 
-    // Build filter conditions
+    // ── Check Redis cache ────────────────────────────────────
+    const cacheKey = `txn-list:${clerkUserId}:${month}:${category}:${type}:${search}:${sort}:${page}:${limit}`;
+    const cached = await redis.get(cacheKey);
+
+    if (cached) {
+      return next(
+        res.status(200).json({
+          status: "success",
+          data: JSON.parse(cached),
+        })
+      );
+    }
+
+    // ── Build filter conditions ──────────────────────────────
     const where: any = { userId: user.id };
 
     // Month filter: ?month=2026-03
-    if (req.query.month) {
-      const [year, month] = (req.query.month as string).split("-").map(Number);
+    if (month) {
+      const [y, m] = month.split("-").map(Number);
       where.date = {
-        gte: new Date(year, month - 1, 1),
-        lt: new Date(year, month, 1),
+        gte: new Date(y, m - 1, 1),
+        lt: new Date(y, m, 1),
       };
     }
 
     // Category filter
-    if (req.query.category) {
-      where.category = req.query.category as string;
+    if (category) {
+      where.category = category;
     }
 
     // Type filter
-    if (req.query.type && (req.query.type === "EXPENSE" || req.query.type === "INCOME")) {
-      where.type = req.query.type;
+    if (type && (type === "EXPENSE" || type === "INCOME")) {
+      where.type = type;
     }
+
+    // Search filter
+    if (search) {
+      where.description = {
+        contains: search,
+        mode: "insensitive",
+      };
+    }
+
+    // Sort
+    let orderBy: any = { date: "desc" };
+    if (sort === "oldest") orderBy = { date: "asc" };
+    else if (sort === "highest") orderBy = { amount: "desc" };
+    else if (sort === "lowest") orderBy = { amount: "asc" };
 
     const [transactions, total] = await Promise.all([
       prisma.transaction.findMany({
         where,
-        orderBy: { date: "desc" },
+        orderBy,
         skip,
         take: limit,
         select: {
@@ -75,18 +112,23 @@ const list = async (req: Request, res: Response, next: NextFunction) => {
       amount: Number(t.amount),
     }));
 
+    const responseData = {
+      transactions: serialized,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+
+    // ── Store in Redis cache ─────────────────────────────────
+    await redis.set(cacheKey, JSON.stringify(responseData), "EX", CACHE_TTL);
+
     return next(
       res.status(200).json({
         status: "success",
-        data: {
-          transactions: serialized,
-          pagination: {
-            page,
-            limit,
-            total,
-            totalPages: Math.ceil(total / limit),
-          },
-        },
+        data: responseData,
       })
     );
   } catch (error) {

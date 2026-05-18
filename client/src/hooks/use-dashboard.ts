@@ -118,6 +118,24 @@ export function useDeleteTransaction() {
   });
 }
 
+// ─── Update Transaction ──────────────────────────────────────
+export function useUpdateTransaction() {
+  const authFetch = useAuthApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: { description?: string; amount?: number; category?: string } }) =>
+      authFetch(`/transaction/${id}`, { method: "PUT", data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["category-breakdown"] });
+      queryClient.invalidateQueries({ queryKey: ["weekly-pattern"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      queryClient.invalidateQueries({ queryKey: ["monthly-trend"] });
+    },
+  });
+}
+
 // ─── Update Budget ───────────────────────────────────────────
 export function useUpdateBudget() {
   const authFetch = useAuthApi();

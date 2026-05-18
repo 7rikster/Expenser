@@ -105,7 +105,7 @@ export const AppSidebar = () => {
             <X className="h-4 w-4" />
           </button>
         </div>
-        <SidebarMenuItem className="hidden  group-data-[collapsible=icon]:flex">
+        <SidebarMenuItem className="hidden  group-data-[collapsible=icon]:flex mb-1">
           <SidebarMenuButton className="rounded-lg transition-all duration-200 cursor-pointer text-xl" onClick={toggleSidebar}>
           <Menu className="!h-6 !w-6 text-xl" />
         </SidebarMenuButton>

@@ -15,6 +15,7 @@ import {
   useMonthlyTrend,
   useTransactionList,
   useDeleteTransaction,
+  useUpdateTransaction,
   useCreateUser,
 } from "@/hooks/use-dashboard";
 import { useDashboardStore } from "@/store/dashboard-store";
@@ -83,6 +84,7 @@ export default function Dashboard() {
     limit: 10,
   });
   const deleteTransaction = useDeleteTransaction();
+  const updateTransaction = useUpdateTransaction();
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto">
@@ -131,7 +133,9 @@ export default function Dashboard() {
           transactions={transactionData?.transactions}
           isLoading={isTransactionsLoading}
           onBulkDelete={(ids) => deleteTransaction.mutateAsync(ids)}
+          onUpdate={(id, data) => updateTransaction.mutateAsync({ id, data })}
           isDeleting={deleteTransaction.isPending}
+          isUpdating={updateTransaction.isPending}
         />
       </Suspense>
 

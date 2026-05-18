@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
-import { startOfDay, startOfMonth } from "src/utils/functions";
+import { startOfDay, startOfMonth, invalidateTransactionListCache } from "src/utils/functions";
 import { Prisma as P } from "../../../generated/prisma/client";
 import redis from "src/lib/redis";
 
@@ -254,6 +254,9 @@ const deleteTransaction = async (
         await redis.del(...keys);
       }
     } while (cursor1 !== "0");
+
+    // Invalidate transaction list cache
+    await invalidateTransactionListCache(redis, clerkUserId!);
 
     return next(
       res.status(200).json({

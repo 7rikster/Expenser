@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
-import { calculateNextRecurringDate, startOfDay, startOfMonth, getWeekStart, toLocalDateString } from "src/utils/functions";
+import { calculateNextRecurringDate, startOfDay, startOfMonth, getWeekStart, toLocalDateString, invalidateTransactionListCache } from "src/utils/functions";
 import { Prisma as P } from "../../../generated/prisma/client";
 import redis from "src/lib/redis";
 
@@ -185,6 +185,7 @@ const create = async (
       await redis.del(monthlyTrendCacheKey);
       await redis.del(weeklyPatternCacheKey);
       await redis.del(categoryBreakdown);
+      await invalidateTransactionListCache(redis, clerkUserId!);
       return newTransaction;
     },
     { timeout: 15000 }

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
-import { startOfDay, startOfMonth } from "src/utils/functions";
+import { startOfDay, startOfMonth, invalidateTransactionListCache } from "src/utils/functions";
 import { Prisma as P } from "../../../generated/prisma/client";
 import redis from "src/lib/redis";
 
@@ -65,6 +65,7 @@ const updateTransaction = async (
 
       const todayKey = new Date().toISOString().slice(0, 10);
       await redis.del(`dashboard:${clerkUserId}:${todayKey}`);
+      await invalidateTransactionListCache(redis, clerkUserId!);
 
       return next(
         res.status(200).json({
@@ -262,7 +263,49 @@ const updateTransaction = async (
 
     /* ── 7. Clear cache ──────────────────────────────────────── */
     const todayKey = new Date().toISOString().slice(0, 10);
+    const monthlyTrendCacheKey = `monthly-trend:${clerkUserId}:${new Date().toISOString().slice(0, 7)}`;
     await redis.del(`dashboard:${clerkUserId}:${todayKey}`);
+    await redis.del(monthlyTrendCacheKey);
+    let cursor = "0";
+    const pattern = `weekly-spending:${clerkUserId}:*`;
+    do {
+      const result = await redis.scan(
+        cursor,
+        "MATCH",
+        pattern,
+        "COUNT",
+        100
+      );
+
+      cursor = result[0];
+
+      const keys = result[1];
+
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } while (cursor !== "0");
+
+    let cursor1 = "0";
+    const pattern1 = `category-breakdown:${clerkUserId}:*`;
+    do {
+      const result = await redis.scan(
+        cursor1,
+        "MATCH",
+        pattern1,
+        "COUNT",
+        100
+      );
+
+      cursor1 = result[0];
+
+      const keys = result[1];
+
+      if (keys.length > 0) {
+        await redis.del(...keys);
+      }
+    } while (cursor1 !== "0");
+    await invalidateTransactionListCache(redis, clerkUserId!);
 
     return next(
       res.status(200).json({

@@ -118,3 +118,22 @@ export function getWeekEnd(weekStart: Date): Date {
   d.setHours(0, 0, 0, 0);
   return d;
 }
+
+/**
+ * Invalidates all cached transaction list entries for a user.
+ * Uses SCAN to find keys matching `txn-list:<clerkUserId>:*` and deletes them.
+ */
+export async function invalidateTransactionListCache(
+  redis: import("ioredis").default,
+  clerkUserId: string
+): Promise<void> {
+  const pattern = `txn-list:${clerkUserId}:*`;
+  let cursor = "0";
+  do {
+    const [nextCursor, keys] = await redis.scan(cursor, "MATCH", pattern, "COUNT", 100);
+    cursor = nextCursor;
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+  } while (cursor !== "0");
+}
