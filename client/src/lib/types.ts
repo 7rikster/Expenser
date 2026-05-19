@@ -68,3 +68,10 @@ export interface ApiResponse<T> {
   data: T;
   msg?: string;
 }
+
+export interface ScannedData{
+  amount: number;
+  description: string | null;
+  date: string | null;
+  category: string | null;
+}

@@ -25,6 +25,7 @@
   "packageManager": "pnpm@10.7.0",
   "dependencies": {
     "@clerk/express": "^1.7.65",
+    "@google/generative-ai": "^0.24.1",
     "@prisma/adapter-pg": "^7.3.0",
     "cors": "^2.8.6",
     "esbuild": "^0.27.2",

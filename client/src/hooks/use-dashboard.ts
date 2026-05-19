@@ -17,7 +17,7 @@ import type {
  * Helper to get authenticated API calls.
  * Sets the Clerk token before each request.
  */
-function useAuthApi() {
+export function useAuthApi() {
   const { getToken } = useAuth();
 
   const authFetch = useCallback(
@@ -97,6 +97,16 @@ export function useTransactionList(params: {
     queryKey: ["transactions", params],
     queryFn: () =>
       authFetch<TransactionListResponse>("/transaction/list", { params }),
+  });
+}
+
+// ─── Upload Receipt ────────────────────────────────────────────
+export function useUploadReceipt() {
+  const authFetch = useAuthApi();
+
+  return useMutation({
+    mutationFn: (data: FormData) =>
+      authFetch("/ai/scan-receipt", { method: "POST", data }),
   });
 }
 

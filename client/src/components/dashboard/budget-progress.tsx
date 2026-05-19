@@ -91,7 +91,7 @@ function BudgetProgressComponent({ data, isLoading }: BudgetProgressProps) {
   const monthSpent = Number(data.thisMonthExpense.total);
   
   function handleEditBudget() {
-    if(budgetData.dailyBudget === 0 || budgetData.monthlyBudget === 0){
+    if(budgetData.dailyBudget < 0 || budgetData.monthlyBudget < 0){
       toast.error("Please enter a valid budget.");
       return;
     }

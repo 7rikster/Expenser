@@ -28,6 +28,9 @@ import { useAuth, useUser } from "@clerk/nextjs";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import axios from "axios";
+import ReceiptScanner from "./receipt-scanner";
+import { ScannedData } from "@/lib/types";
+import { useUploadReceipt } from "@/hooks/use-dashboard";
 
 interface category {
   id: string;
@@ -42,6 +45,7 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
   const { getToken } = useAuth();
   const { isLoaded } = useUser();
   const queryClient = useQueryClient();
+  const {isPending: isReceiptScanning} = useUploadReceipt();
 
   const router = useRouter();
   const {
@@ -65,6 +69,7 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
   const type = watch("type");
   const isRecurring = watch("isRecurring");
   const date = watch("date");
+  const category = watch("category");
 
   const [transactionLoading, setTransactionLoading] = useState(false);
 
@@ -112,13 +117,27 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
         console.error("Error creating/fetching user:", err);
       }
       finally{
-        setTransactionLoading(false);
+        setTransactionLoading(false); 
       }
+  }
+  const handleScanComplete = (scannedData:ScannedData) => {
+    console.log("Scanned Data: ", scannedData);
+    if(scannedData){
+      setValue("amount", scannedData.amount.toString());
+      if(scannedData.date)setValue("date", new Date(scannedData.date));
+      if(scannedData.description){
+        setValue("description", scannedData.description);
+      }
+      if(scannedData.category){
+        setValue("category", scannedData.category);
+      }
+    }
   }
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
       {/* AI Receipt scanner */}
+      <ReceiptScanner onScanComplete={handleScanComplete}/>
       <div className="space-y-2 w-full">
         <Label className="text-sm font-medium" htmlFor="type">
           Type
@@ -163,7 +182,7 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
           </Label>
           <Select
             onValueChange={(value) => setValue("category", value)}
-            defaultValue={getValues("category") || ""}
+            value={category || ""}
           >
             <SelectTrigger className="w-full" id="category">
               <SelectValue placeholder="Select category" />
@@ -280,7 +299,7 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
         <Button
           className="flex-1 cursor-pointer"
           type="submit"
-          disabled={transactionLoading}
+          disabled={transactionLoading || isReceiptScanning}
         >
           {transactionLoading ? <><Loader2 className="h-4 w-4 animate-spin text-white"/></> : "Add Transaction"}
         </Button>
