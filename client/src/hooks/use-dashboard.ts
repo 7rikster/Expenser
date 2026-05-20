@@ -110,6 +110,16 @@ export function useUploadReceipt() {
   });
 }
 
+// ─── Natural Language Extraction ────────────────────────────────────────────
+export function useNaturalLanguageExtraction() {
+  const authFetch = useAuthApi();
+
+  return useMutation({
+    mutationFn: (data: { input: string }) =>
+      authFetch("/ai/natural-language-extraction", { method: "POST", data }),
+  });
+}
+
 // ─── Delete Transaction (Bulk) ───────────────────────────────
 export function useDeleteTransaction() {
   const authFetch = useAuthApi();
