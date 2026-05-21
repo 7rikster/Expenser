@@ -31,37 +31,43 @@ const naturalLanguageExtraction = async (
         msg: "No input provided",
       });
     }
+    const now = new Date();
+
+    const localDate = now.toLocaleDateString("en-CA"); 
 
 
     const prompt = `
-    Analyze this input text and extract the following information in JSON format:
-      - Total amount (just the number)
-      - Date (in ISO format)
-      - Description or items purchased (brief summary)
-      - Merchant/store name
-      - Suggested category (one of: housing,transportation,groceries,utilities,entertainment,food,shopping,healthcare,education,personal,travel,insurance,gifts,bills,other-expense )
-      
-      Only respond with valid JSON in this exact format:
-      {
-        "amount": number,
-        "date": "ISO date string",
-        "description": "string",
-        "merchantName": "string",
-        "category": "string"
-      }
+    Current local date: ${localDate}
+    Analyze this expense input and extract structured data.
 
-      Example:
-        Input: "Lunch at Cafe for Rs 250"
-        Output:
-        {
-          "amount": 250,
-          "date": "",
-          "description": "Lunch at Cafe",
-          "merchantName": "",
-          "category": "food"
-        }
+    Rules:
+    - Resolve relative dates like:
+      - today
+      - yesterday
+      - day before yesterday
+      - last monday
+      - this morning
+      using the current date provided above.
+    - Return the date in ISO 8601 format.
+    - If no date is mentioned, return an empty string.
+    - Amount should only contain the numeric value.
+    - Category must be one of:
+      housing, transportation, groceries, utilities,
+      entertainment, food, shopping, healthcare,
+      education, personal, travel, insurance,
+      gifts, bills, other-expense
 
-      If the required information cannot be extracted from the input text, return an empty object
+    Return ONLY valid JSON in this exact format:
+    {
+      "amount": number,
+      "date": "ISO date string",
+      "description": "string",
+      "merchantName": "string",
+      "category": "string"
+    }
+      If a field cannot be extracted, use:
+      - empty string for strings
+      - 0 for amount
     `;
 
     const result = await model.generateContent([

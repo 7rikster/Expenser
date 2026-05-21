@@ -111,13 +111,13 @@ export default function Dashboard() {
       </div>
 
       {/* Weekly Pattern + Budget Tracking */}
-      <div className="grid gap-6 lg:grid-cols-7">
-        <div className="lg:col-span-4">
+      <div className="grid gap-6 lg:grid-cols-10">
+        <div className="lg:col-span-6">
           <Suspense fallback={<ChartSkeleton />}>
             <WeeklyBarChart />
           </Suspense>
         </div>
-        <div className="lg:col-span-3">
+        <div className="lg:col-span-4">
           {/* AI Insights */}
           <AIInsights
             dashboardData={dashboardData}
