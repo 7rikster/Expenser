@@ -30,12 +30,15 @@ export default function InputTray({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if(!file) return;
     if (file) {
       if (!file.type.startsWith("image/")) {
         toast.error("Please select an image file (PNG/JPG)");
+        e.target.value = "";
         return;
       }
       onFileSelect(file);
+      e.target.value = "";
     }
   };
 
@@ -49,7 +52,7 @@ export default function InputTray({
   return (
     <form 
       onSubmit={handleFormSubmit}
-      className="mt-2 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-2 relative shadow-lg"
+      className=" bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-2 relative shadow-lg shrink-0"
     >
       {filePreview && (
         <div className="flex items-center gap-2 p-2 bg-zinc-50 dark:bg-zinc-900 rounded-xl mb-2 w-max relative group">
@@ -69,7 +72,13 @@ export default function InputTray({
           </div>
           <button
             type="button"
-            onClick={onFileRemove}
+            onClick={() => {
+              onFileRemove();
+
+              if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+              }
+            }}
             className="absolute -top-1.5 -right-1.5 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full transition-transform active:scale-90 cursor-pointer shadow-md"
           >
             <X className="w-3.5 h-3.5" />

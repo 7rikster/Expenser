@@ -88,7 +88,7 @@ export default function Dashboard() {
   const updateTransaction = useUpdateTransaction();
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto">
+    <div className="space-y-6 max-w-[1400px] mx-auto p-4 md:p-6">
       {/* Summary Cards */}
       
 

@@ -33,7 +33,7 @@ function TransactionsContent() {
   // ── Loading state ────────────────────────────────────────
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 md:p-6">
         <TransactionsSkeleton />
       </div>
     );
@@ -42,7 +42,7 @@ function TransactionsContent() {
   // ── Error state ──────────────────────────────────────────
   if (isError) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-6 p-4 md:p-6">
         <div className="flex items-center justify-between">
           {/* <TransactionsHeader /> */}
         </div>
@@ -55,7 +55,7 @@ function TransactionsContent() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 p-4 md:p-6">
       {/* ── Filters ───────────────────────────────────────── */}
       <Card className="border-0 shadow-sm">
         <CardContent className="py-3 px-4">

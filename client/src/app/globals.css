@@ -185,3 +185,44 @@
   background-size: 200% 200%;
   animation: gradientMove 3s ease infinite;
 }
+
+.auto-scrollbar {
+  overflow-y: auto;
+
+  /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+/* Chrome / Edge / Safari */
+.auto-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+
+.auto-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.auto-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+}
+
+/* Show scrollbar only while hovering OR scrolling */
+.auto-scrollbar:hover::-webkit-scrollbar-thumb,
+.auto-scrollbar:active::-webkit-scrollbar-thumb,
+.auto-scrollbar:focus::-webkit-scrollbar-thumb {
+  background: rgba(161, 161, 170, 0.55);
+}
+
+/* Firefox hover */
+.auto-scrollbar:hover {
+  scrollbar-color: rgba(161, 161, 170, 0.55) transparent;
+}
+
+/* Remove scrollbar arrows/buttons */
+.auto-scrollbar::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}

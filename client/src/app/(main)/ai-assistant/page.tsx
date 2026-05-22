@@ -126,7 +126,7 @@ export default function AIAssistantPage() {
       onDragOver={handleDrag}
       onDragLeave={handleDrag}
       onDrop={handleDrop}
-      className={`h-full flex flex-col max-w-4xl mx-auto py-3 relative transition-all duration-200 ${
+      className={`h-[calc(100vh-4rem)] overflow-hidden flex flex-col justify-center  mx-auto pb-2 relative transition-all duration-200 ${
         dragActive ? "bg-violet-500/5 backdrop-blur-sm" : ""
       }`}
     >
@@ -148,6 +148,7 @@ export default function AIAssistantPage() {
         messages={messages} 
         isProcessing={isProcessing} 
       />
+      <div className="max-w-4xl mx-auto w-full px-2 pb-2 md:pb-4 ">
 
       <InputTray
         inputText={inputText}
@@ -158,7 +159,8 @@ export default function AIAssistantPage() {
         onFileSelect={handleFileSelect}
         onFileRemove={handleFileRemove}
         onSubmit={handleSubmit}
-      />
+        />
+        </div>
     </div>
   );
 }

@@ -21,7 +21,7 @@ const MainLayout = async ({ children }: { children: React.ReactNode }) => {
           <SidebarTrigger className="-ml-1" />
           <HeaderTitle />
         </header>
-          <main className="flex-1 overflow-auto p-4 md:p-6 bg-gray-100 dark:bg-background">{children}</main>
+          <main className="flex-1 overflow-auto  bg-gray-100 dark:bg-background">{children}</main>
         </SidebarInset>
       </SidebarProvider>
     </div>
