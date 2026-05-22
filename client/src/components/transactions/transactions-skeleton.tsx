@@ -7,7 +7,7 @@ export function TransactionsSkeleton() {
   return (
     <div className="space-y-6">
       {/* Filters skeleton */}
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between bg-white py-8 px-6 rounded-lg">
+      <Card className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between py-8 px-6 rounded-lg">
         <Skeleton className="h-9 w-full max-w-sm" />
         <div className="flex gap-2">
           <Skeleton className="h-9 w-[140px]" />
@@ -15,7 +15,7 @@ export function TransactionsSkeleton() {
           <Skeleton className="h-9 w-[130px]" />
           <Skeleton className="h-9 w-[160px]" />
         </div>
-      </div>
+      </Card>
 
       {/* Table skeleton */}
       <Card className="border-0 shadow-sm overflow-hidden p-0">

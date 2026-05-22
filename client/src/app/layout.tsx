@@ -47,11 +47,11 @@ export default function RootLayout({
             <main className="min-h-screen">{children}</main>
             <Toaster richColors/>
             </QueryProvider>
-            <footer className="py-12 bg-primary font-sans ">
+            {/* <footer className="py-12 bg-primary font-sans ">
               <div className="container mx-auto px-4 text-center text-accent">
                 <p>Made with ❤️ by 7rikster</p>
               </div>
-            </footer>
+            </footer> */}
           </ThemeProvider>
         </body>
       </html>

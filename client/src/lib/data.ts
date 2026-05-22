@@ -22,14 +22,14 @@ export const defaultCategories = [
     icon: "TrendingUp",
   },
   {
-    id: "business",
+    id: "business-income",
     name: "Business",
     type: "INCOME",
     color: "#ec4899", // pink-500
     icon: "Building",
   },
   {
-    id: "rental",
+    id: "rental-income",
     name: "Rental",
     type: "INCOME",
     color: "#f59e0b", // amber-500

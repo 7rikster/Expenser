@@ -43,7 +43,7 @@ const list = async (req: Request, res: Response, next: NextFunction) => {
     if (cached) {
       return next(
         res.status(200).json({
-          status: "success",
+          status: "success returned from Redis cache",
           data: JSON.parse(cached),
         })
       );
@@ -127,7 +127,7 @@ const list = async (req: Request, res: Response, next: NextFunction) => {
 
     return next(
       res.status(200).json({
-        status: "success",
+        status: "success, Fetched from DB",
         data: responseData,
       })
     );

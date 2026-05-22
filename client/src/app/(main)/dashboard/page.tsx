@@ -75,7 +75,8 @@ export default function Dashboard() {
   }, [isLoaded, user]);
 
   // React Query hooks
-  const { data: dashboardData, isLoading: isDashboardLoading } = useDashboardData();
+  const { data: dashboardData, isLoading: isDashboardLoading, isFetching: isDashboardFetching } = useDashboardData();
+  console.log("Fetching: ", isDashboardFetching);
   const { data: trendData, isLoading: isTrendLoading } = useMonthlyTrend();
 
   const { data: transactionData, isLoading: isTransactionsLoading } = useTransactionList({
