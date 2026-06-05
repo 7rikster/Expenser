@@ -2,11 +2,38 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthApi } from "./use-dashboard";
 import { CandidateTransaction } from "./../store/assistant-store";
 
+interface AssistantResponse {
+  action:
+    | "CREATE_DRAFT"
+    | "UPDATE_DRAFT"
+    | "DELETE_DRAFT"
+    | "APPROVE_DRAFTS"
+    | "LIST_DB"
+    | "CONFIRM_DELETE_DB"
+    | "DELETE_DB"
+    | "GENERAL";
+
+  replyText: string;
+
+  draftTransactions?: CandidateTransaction[];
+
+  transactions?: CandidateTransaction[];
+
+  dbQueryFilters?: {
+    limit?: number;
+    category?: string;
+    type?: "INCOME" | "EXPENSE";
+    merchantName?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+}
+
 export function useProcessAssistantMessage() {
   const authFetch = useAuthApi();
   return useMutation({
     mutationFn: (formData: FormData) =>
-      authFetch<{ transactions: Omit<CandidateTransaction, "id">[] }>("/ai/assistant", {
+      authFetch<AssistantResponse>("/ai/assistant", {
         method: "POST",
         data: formData,
       }),

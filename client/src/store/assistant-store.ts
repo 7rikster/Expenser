@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
 export interface CandidateTransaction {
-  id: string; // Client-side client key
+  id: string; 
   amount: number;
   date: string;
   description: string;
@@ -14,20 +14,32 @@ export interface CandidateTransaction {
 export interface Message {
   id: string;
   sender: "user" | "assistant";
+  action: "CREATE_DRAFT"
+    | "UPDATE_DRAFT"
+    | "DELETE_DRAFT"
+    | "APPROVE_DRAFTS"
+    | "LIST_DB"
+    | "CONFIRM_DELETE_DB"
+    | "DELETE_DB"
+    | "GENERAL";
   text: string;
   timestamp: string;
-  imageUrl?: string; // Preview image blob/base64 URL
-  candidates?: CandidateTransaction[]; // Pending draft list
+  imageUrl?: string;
+  candidates?: CandidateTransaction[];
   status?: "pending" | "approved" | "dismissed";
 }
 
 interface AssistantState {
   messages: Message[];
   isProcessing: boolean;
+  lastAssistantMessage: string | null;
+  pendingDbTransactionIds: string[] | null; // Targets live DB item for confirmation deletions
   addMessage: (message: Omit<Message, "id" | "timestamp">) => string;
   updateMessageStatus: (messageId: string, status: "pending" | "approved" | "dismissed") => void;
   updateCandidate: (messageId: string, candidateId: string, updates: Partial<CandidateTransaction>) => void;
   removeCandidate: (messageId: string, candidateId: string) => void;
+  setLastAssistantMessage: (message: string | null) => void;
+  setPendingDbTransactionIds: (ids: string[] | null) => void;
   setProcessing: (isProcessing: boolean) => void;
   clearChat: () => void;
 }
@@ -37,6 +49,8 @@ export const useAssistantStore = create<AssistantState>()(
     (set) => ({
       messages: [],
       isProcessing: false,
+      lastAssistantMessage: null,
+      pendingDbTransactionIds: null,
       addMessage: (msg) => {
         const id = crypto.randomUUID();
         const timestamp = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -72,8 +86,10 @@ export const useAssistantStore = create<AssistantState>()(
           };
         })
       })),
+      setPendingDbTransactionIds: (pendingDbTransactionIds) => set({ pendingDbTransactionIds }),
+      setLastAssistantMessage: (lastAssistantMessage) => set({ lastAssistantMessage }),
       setProcessing: (isProcessing) => set({ isProcessing }),
-      clearChat: () => set({ messages: [], isProcessing: false }),
+      clearChat: () => set({ messages: [], isProcessing: false, pendingDbTransactionIds: null }),
     }),
     {
       name: "expenser-ai-assistant",

@@ -4,6 +4,7 @@ import React from "react";
 import { Bot } from "lucide-react";
 import { Message } from "@/store/assistant-store";
 import InteractiveMultiExpenseCard from "./InteractiveMultiExpenseCard";
+import {NonInteractiveMultiExpenseCard} from "./nonInteractiveMultiExpenseCard";
 
 interface MessageBubbleProps {
   message: Message;
@@ -45,8 +46,15 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
             {message.timestamp}
           </span>
         </div>
+         {(message.action === "LIST_DB" || message.action === "CONFIRM_DELETE_DB") && message.candidates && message.candidates.length > 0 && (
+          <div className="w-full max-w-md mt-1">
+            <NonInteractiveMultiExpenseCard
+              candidates={message.candidates}
+            />
+          </div>
+        )}
 
-        {message.candidates && message.candidates.length > 0 && (
+        {(message.action === "CREATE_DRAFT" || message.action === "UPDATE_DRAFT" || message.action === "DELETE_DRAFT") && message.candidates && message.candidates.length > 0 && (
           <div className="w-full max-w-md mt-1">
             <InteractiveMultiExpenseCard 
               messageId={message.id} 

@@ -38,7 +38,7 @@ export default function MessageList({ messages, isProcessing }: MessageListProps
   }
 
   return (
-    <div className="flex-1 overflow-y-auto py-4 auto-scrollbar min-h-0 w-full">
+    <div className="flex-1 overflow-y-auto py-4 auto-scrollbar min-h-0 w-full px-2">
       <div className="max-w-4xl space-y-4 mx-auto w-full auto-scrollbar">
         {messages.map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
@@ -54,15 +54,6 @@ export default function MessageList({ messages, isProcessing }: MessageListProps
                 <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.3s]"></span>
                 <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce [animation-delay:-0.15s]"></span>
                 <span className="w-1.5 h-1.5 rounded-full bg-zinc-400 animate-bounce"></span>
-              </div>
-              
-              <div className="w-[300px] h-[150px] border border-zinc-100 dark:border-zinc-900 rounded-xl bg-white/60 dark:bg-zinc-900/10 p-3 space-y-3 flex flex-col justify-between">
-                <div className="h-4 bg-zinc-200 dark:bg-zinc-850 rounded w-1/3 animate-pulse" />
-                <div className="space-y-2">
-                  <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
-                  <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-5/6 animate-pulse" />
-                </div>
-                <div className="h-8 bg-zinc-200 dark:bg-zinc-800 rounded w-full animate-pulse" />
               </div>
             </div>
           </div>

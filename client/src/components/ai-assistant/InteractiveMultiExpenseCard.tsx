@@ -1,5 +1,4 @@
 "use client";
-import React from "react";
 import { Trash2, Check, AlertCircle, Loader2 } from "lucide-react";
 import { CandidateTransaction, useAssistantStore } from "@/store/assistant-store";
 import { useBulkCreateTransactions } from "@/hooks/use-assistant";
@@ -20,7 +19,7 @@ export default function InteractiveMultiExpenseCard({
     status
 }: InteractiveMultiExpenseCardProps) {
 
-    const { updateMessageStatus, updateCandidate, removeCandidate } = useAssistantStore();
+    const { updateMessageStatus, updateCandidate, removeCandidate, isProcessing } = useAssistantStore();
     const { mutateAsync: bulkCreateMutation, isPending } = useBulkCreateTransactions(); 
 
     if (status === "dismissed" || candidates.length === 0) {
@@ -40,7 +39,7 @@ export default function InteractiveMultiExpenseCard({
             <ul className="text-xs space-y-1 pl-7 list-disc">
             {candidates.map((c) => (
                 <li key={c.id}>
-                <span className="font-semibold capitalize">[{c.type.toLowerCase()}]</span> {c.merchantName}: ${Number(c.amount).toFixed(2)} on {c.date} ({c.category})
+                <span className="font-semibold capitalize">[{c.type.toLowerCase()}]</span> {c.merchantName}: Rs. {Number(c.amount).toFixed(2)} on {c.date} ({c.category})
                 </li>
             ))}
             </ul>
@@ -194,7 +193,7 @@ export default function InteractiveMultiExpenseCard({
         {/* Bulk Approval Button */}
         <button
             onClick={handleApproveAll}
-            disabled={isPending}
+            disabled={isPending || isProcessing}
             className="w-full bg-violet-600 hover:bg-violet-700 text-white rounded-lg py-2 text-xs font-semibold shadow-md active:scale-95 transition-transform flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
         >
             {isPending ? (
