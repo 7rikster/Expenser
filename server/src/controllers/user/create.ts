@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { prisma } from "../../lib";
-import { getDayExpense, getThisMonthExpense } from "src/utils/transaction";
 import redis from "src/lib/redis";
+
 
 const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -32,7 +32,8 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
         name: true,
         email: true,
         dailyBudget: true,
-        monthlyBudget: true
+        monthlyBudget: true,
+        balance: true
       }
     });
 

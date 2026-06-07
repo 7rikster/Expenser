@@ -11,6 +11,7 @@ import type {
   TransactionListResponse,
   ApiResponse,
   ExpenseSummary,
+  ScannedData,
 } from "@/lib/types";
 
 /**
@@ -106,7 +107,7 @@ export function useUploadReceipt() {
 
   return useMutation({
     mutationFn: (data: FormData) =>
-      authFetch("/ai/scan-receipt", { method: "POST", data }),
+      authFetch<ScannedData>("/ai/scan-receipt", { method: "POST", data }),
   });
 }
 
@@ -116,7 +117,7 @@ export function useNaturalLanguageExtraction() {
 
   return useMutation({
     mutationFn: (data: { input: string }) =>
-      authFetch("/ai/natural-language-extraction", { method: "POST", data }),
+      authFetch<ScannedData>("/ai/natural-language-extraction", { method: "POST", data }),
   });
 }
 

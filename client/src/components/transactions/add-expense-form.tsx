@@ -125,13 +125,25 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
     console.log("Scanned Data: ", scannedData);
     if (scannedData) {
       setValue("amount", scannedData.amount.toString());
-      if (scannedData.date) setValue("date", new Date(scannedData.date));
+      if(scannedData.type){
+        setValue("type", scannedData.type);
+        // Wait for type change render
+        setTimeout(() => {
+          if (scannedData.category) {
+            setValue("category", scannedData.category);
+          }
+        }, 0);
+      }
+      else{
+        if (scannedData.date) setValue("date", new Date(scannedData.date));
+      }
       if (scannedData.description) {
         setValue("description", scannedData.description);
       }
       if (scannedData.category) {
         setValue("category", scannedData.category);
       }
+      
     }
   };
 
@@ -158,10 +170,10 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
           Type
         </Label>
         <Select
+          value={type}
           onValueChange={(value) =>
             setValue("type", value as "EXPENSE" | "INCOME")
           }
-          defaultValue={type}
         >
           <SelectTrigger className="w-full" id="type">
             <SelectValue placeholder="Select type" />

@@ -33,8 +33,9 @@ function SummaryCardsComponent({ data, isLoading }: SummaryCardsProps) {
       </div>
     );
   }
-  console.log("Data: ",data);
+  // console.log("Data: ",data);
   const monthlySpent = Number(data.thisMonthExpense.total);
+  const monthlyIncome = Number(data.thisMonthIncome.total);
   const lastMonthSpent = Number(data.lastMonthExpense.total || 0);
   const monthlyBudget = Number(data.user.monthlyBudget || 0);
   const remaining = monthlyBudget - monthlySpent;
@@ -45,12 +46,20 @@ function SummaryCardsComponent({ data, isLoading }: SummaryCardsProps) {
 
   const cards = [
     {
-      title: "Monthly Expenses",
-      value: `₹${monthlySpent.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
-      subtitle: `${data.thisMonthExpense.categories.length} categories`,
+      title: "Total Income",
+      value: `₹${monthlyIncome.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+      subtitle: `${data.thisMonthIncome.categories.length} categories`,
       icon: DollarSign,
       iconBg: "bg-blue-500/10 dark:bg-blue-500/20",
       iconColor: "text-blue-600 dark:text-blue-400",
+    },
+    {
+      title: "Total Expense",
+      value: `₹${monthlySpent.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`,
+      subtitle: `${data.thisMonthExpense.categories.length} categories`,
+      icon: DollarSign,
+      iconBg: "bg-red-500/10 dark:bg-red-500/20",
+      iconColor: "text-red-600 dark:text-red-400",
     },
     {
       title: "Budget Remaining",
@@ -68,14 +77,14 @@ function SummaryCardsComponent({ data, isLoading }: SummaryCardsProps) {
           ? "text-emerald-600 dark:text-emerald-400"
           : "text-red-600 dark:text-red-400",
     },
-    {
-      title: "Transactions",
-      value: data.transactionCount.toString(),
-      subtitle: "This month",
-      icon: Receipt,
-      iconBg: "bg-violet-500/10 dark:bg-violet-500/20",
-      iconColor: "text-violet-600 dark:text-violet-400",
-    },
+    // {
+    //   title: "Transactions",
+    //   value: data.transactionCount.toString(),
+    //   subtitle: "This month",
+    //   icon: Receipt,
+    //   iconBg: "bg-violet-500/10 dark:bg-violet-500/20",
+    //   iconColor: "text-violet-600 dark:text-violet-400",
+    // },
     // {
     //   title: "vs Last Month",
     //   value: `${monthChange >= 0 ? "+" : ""}${monthChange.toFixed(1)}%`,

@@ -82,3 +82,44 @@ export const getThisMonthExpense = async (userId: string, date:Date = new Date()
   };
 };
 
+export const getThisMonthIncome = async (userId: string, date: Date = new Date()) => {
+  const monthStart = startOfMonth(date);
+
+  const monthly = await prisma.monthlyIncome.findUnique({
+    where: {
+      userId_month: {
+        userId,
+        month: monthStart,
+      },
+    },
+    select: {
+      month: true,
+      total: true,
+      incomeItems: {
+        select: {
+          category: true,
+          amount: true,
+        },
+        orderBy: {
+          amount: "desc",
+        },
+      },
+    },
+  });
+
+  if (!monthly) {
+    return {
+      total: 0,
+      categories: [],
+    };
+  }
+
+  const categories = getTopCategoriesWithOthersAndPercentage(monthly.incomeItems, 4, monthly.total);
+
+  return {
+    total: monthly.total,
+    categories,
+  };
+};
+
+

@@ -50,7 +50,7 @@ export default function HeaderTitle() {
         <Link href="/transactions/add-expense">
           <Button className="text-white cursor-pointer flex items-center gap-2">
             <SquarePen />
-            Add Expense
+            Add Transaction
           </Button>
         </Link>
       </div>

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
-import { getDayExpense, getThisMonthExpense } from "src/utils/transaction";
+import { getDayExpense, getThisMonthExpense, getThisMonthIncome } from "src/utils/transaction";
 import redis from "src/lib/redis";
 import { startOfMonth } from "src/utils/functions";
 
@@ -35,6 +35,7 @@ const getDashboardData = async (
         email: true,
         dailyBudget: true,
         monthlyBudget: true,
+        balance: true,
       },
     });
 
@@ -50,7 +51,7 @@ const getDashboardData = async (
     const currentMonthStart = startOfMonth(now);
     const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
 
-    const [todayExpense, thisMonthExpense, lastMonthExpense, transactionCount] = await Promise.all([
+    const [todayExpense, thisMonthExpense, lastMonthExpense, transactionCount, thisMonthIncome] = await Promise.all([
       getDayExpense(user.id),
       getThisMonthExpense(user.id),
       getThisMonthExpense(user.id, lastMonthDate),
@@ -62,7 +63,8 @@ const getDashboardData = async (
             lt: nextMonthStart,
           },
         },
-      })
+      }),
+      getThisMonthIncome(user.id)
     ]);
 
     const dashboardData = {
@@ -71,6 +73,7 @@ const getDashboardData = async (
       thisMonthExpense,
       lastMonthExpense,
       transactionCount,
+      thisMonthIncome,
     };
 
     await redis.set(cacheKey, JSON.stringify(dashboardData), "EX", 300);

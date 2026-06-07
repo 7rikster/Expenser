@@ -15,10 +15,12 @@ model User {
   imageUrl      String?
   dailyBudget   Decimal?         @db.Decimal(10, 2)
   monthlyBudget Decimal?         @db.Decimal(10, 2)
+  balance       Decimal          @default(0) @db.Decimal(10, 2)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
   dailyExpense  DailyExpense[]
   monthExpense  MonthlyExpense[]
+  monthIncome   MonthlyIncome[]
   transactions  Transaction[]
 
   @@map("users")
@@ -76,6 +78,33 @@ model MonthlyExpenseItem {
   @@unique([monthId, category])
   @@index([monthId])
   @@map("monthlyExpenseItems")
+}
+
+model MonthlyIncome {
+  id           String              @id @default(uuid())
+  month        DateTime
+  total        Decimal             @db.Decimal(10, 2)
+  userId       String
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  incomeItems  MonthlyIncomeItem[]
+  user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month])
+  @@index([userId])
+  @@map("monthlyIncomes")
+}
+
+model MonthlyIncomeItem {
+  id            String        @id @default(uuid())
+  category      String
+  amount        Decimal       @db.Decimal(10, 2)
+  monthId       String
+  monthlyIncome MonthlyIncome @relation(fields: [monthId], references: [id], onDelete: Cascade)
+
+  @@unique([monthId, category])
+  @@index([monthId])
+  @@map("monthlyIncomeItems")
 }
 
 

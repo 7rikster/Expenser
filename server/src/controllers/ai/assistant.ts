@@ -407,37 +407,55 @@ const assistant = async (req: Request, res: Response, next: NextFunction) => {
       }
       const dayMap = new Map<string, { day: Date; totalDecrement: P.Decimal; categories: Map<string, P.Decimal> }>();
       const monthMap = new Map<string, { month: Date; totalDecrement: P.Decimal; categories: Map<string, P.Decimal> }>();
+      const incomeMonthMap = new Map<string, { month: Date; totalDecrement: P.Decimal; categories: Map<string, P.Decimal> }>();
+      let balanceChange = new P.Decimal(0);
 
       for (const txn of transactions) {
-        if (txn.type !== "EXPENSE") continue;
-
         const amount = new P.Decimal(txn.amount.toString());
-        const day = startOfDay(txn.date);
-        const month = startOfMonth(txn.date);
-        const dayKey = day.toISOString();
-        const monthKey = month.toISOString();
 
-        // ── Daily accumulation
-        if (!dayMap.has(dayKey)) {
-          dayMap.set(dayKey, { day, totalDecrement: new P.Decimal(0), categories: new Map() });
-        }
-        const dayEntry = dayMap.get(dayKey)!;
-        dayEntry.totalDecrement = dayEntry.totalDecrement.add(amount);
-        dayEntry.categories.set(
-          txn.category,
-          (dayEntry.categories.get(txn.category) ?? new P.Decimal(0)).add(amount)
-        );
+        if (txn.type === "INCOME") {
+          balanceChange = balanceChange.sub(amount); // Deleting income decreases balance
+          const month = startOfMonth(txn.date);
+          const monthKey = month.toISOString();
 
-        // ── Monthly accumulation
-        if (!monthMap.has(monthKey)) {
-          monthMap.set(monthKey, { month, totalDecrement: new P.Decimal(0), categories: new Map() });
+          if (!incomeMonthMap.has(monthKey)) {
+            incomeMonthMap.set(monthKey, { month, totalDecrement: new P.Decimal(0), categories: new Map() });
+          }
+          const monthEntry = incomeMonthMap.get(monthKey)!;
+          monthEntry.totalDecrement = monthEntry.totalDecrement.add(amount);
+          monthEntry.categories.set(
+            txn.category,
+            (monthEntry.categories.get(txn.category) ?? new P.Decimal(0)).add(amount)
+          );
+        } else if (txn.type === "EXPENSE") {
+          balanceChange = balanceChange.add(amount); // Deleting expense increases balance
+          const day = startOfDay(txn.date);
+          const month = startOfMonth(txn.date);
+          const dayKey = day.toISOString();
+          const monthKey = month.toISOString();
+
+          // ── Daily accumulation
+          if (!dayMap.has(dayKey)) {
+            dayMap.set(dayKey, { day, totalDecrement: new P.Decimal(0), categories: new Map() });
+          }
+          const dayEntry = dayMap.get(dayKey)!;
+          dayEntry.totalDecrement = dayEntry.totalDecrement.add(amount);
+          dayEntry.categories.set(
+            txn.category,
+            (dayEntry.categories.get(txn.category) ?? new P.Decimal(0)).add(amount)
+          );
+
+          // ── Monthly accumulation
+          if (!monthMap.has(monthKey)) {
+            monthMap.set(monthKey, { month, totalDecrement: new P.Decimal(0), categories: new Map() });
+          }
+          const monthEntry = monthMap.get(monthKey)!;
+          monthEntry.totalDecrement = monthEntry.totalDecrement.add(amount);
+          monthEntry.categories.set(
+            txn.category,
+            (monthEntry.categories.get(txn.category) ?? new P.Decimal(0)).add(amount)
+          );
         }
-        const monthEntry = monthMap.get(monthKey)!;
-        monthEntry.totalDecrement = monthEntry.totalDecrement.add(amount);
-        monthEntry.categories.set(
-          txn.category,
-          (monthEntry.categories.get(txn.category) ?? new P.Decimal(0)).add(amount)
-        );
       }
 
       /* ── 5. Prisma interactive transaction ─────────────────── */
@@ -446,7 +464,15 @@ const assistant = async (req: Request, res: Response, next: NextFunction) => {
           // 5.1  Bulk-delete all transactions (1 DB call)
           await tx.transaction.deleteMany({ where: { id: { in: idsToDelete }, userId: user.id } });
 
-          // 5.2  Roll back daily aggregates
+          // 5.2  Update User balance
+          if (!balanceChange.isZero()) {
+            await tx.user.update({
+              where: { id: user.id },
+              data: { balance: { increment: balanceChange } },
+            });
+          }
+
+          // 5.3  Roll back daily aggregates
           if (dayMap.size > 0) {
             // Prefetch all affected DailyExpense rows (1 DB call)
             const dayDates = [...dayMap.values()].map((d) => d.day);
@@ -503,7 +529,7 @@ const assistant = async (req: Request, res: Response, next: NextFunction) => {
             await Promise.all(dailyOps);
           }
 
-          // 5.3  Roll back monthly aggregates
+          // 5.4  Roll back monthly aggregates
           if (monthMap.size > 0) {
             // Prefetch all affected MonthlyExpense rows (1 DB call)
             const monthDates = [...monthMap.values()].map((m) => m.month);
@@ -544,6 +570,58 @@ const assistant = async (req: Request, res: Response, next: NextFunction) => {
                   } else {
                     monthlyOps.push(
                       tx.monthlyExpenseItem.update({
+                        where: { id: item.id },
+                        data: { amount: { decrement: catDecrement } },
+                      })
+                    );
+                  }
+                }
+              }
+            }
+
+            await Promise.all(monthlyOps);
+          }
+
+          // 5.5  Roll back monthly income aggregates
+          if (incomeMonthMap.size > 0) {
+            const monthDates = [...incomeMonthMap.values()].map((m) => m.month);
+            const monthlyIncomes = await tx.monthlyIncome.findMany({
+              where: { userId: user.id, month: { in: monthDates } },
+              include: { incomeItems: true },
+            });
+
+            const monthlyByMonth = new Map(monthlyIncomes.map((me) => [me.month.toISOString(), me]));
+
+            const monthlyOps: Promise<unknown>[] = [];
+
+            for (const [monthKey, { totalDecrement, categories }] of incomeMonthMap) {
+              const monthly = monthlyByMonth.get(monthKey);
+              if (!monthly) continue;
+
+              const newTotal = monthly.total.sub(totalDecrement);
+
+              if (newTotal.lte(0)) {
+                monthlyOps.push(tx.monthlyIncome.delete({ where: { id: monthly.id } }));
+              } else {
+                monthlyOps.push(
+                  tx.monthlyIncome.update({
+                    where: { id: monthly.id },
+                    data: { total: { decrement: totalDecrement } },
+                  })
+                );
+
+                const itemsByCategory = new Map(monthly.incomeItems.map((item) => [item.category, item]));
+
+                for (const [category, catDecrement] of categories) {
+                  const item = itemsByCategory.get(category);
+                  if (!item) continue;
+
+                  const newItemTotal = item.amount.sub(catDecrement);
+                  if (newItemTotal.lte(0)) {
+                    monthlyOps.push(tx.monthlyIncomeItem.delete({ where: { id: item.id } }));
+                  } else {
+                    monthlyOps.push(
+                      tx.monthlyIncomeItem.update({
                         where: { id: item.id },
                         data: { amount: { decrement: catDecrement } },
                       })
@@ -618,6 +696,7 @@ const assistant = async (req: Request, res: Response, next: NextFunction) => {
       if(data.draftTransactions && data.draftTransactions.length > 0){
         const createdTransactions = await prisma.$transaction(async (tx) => {
         const records = [];
+        let balanceChange = new P.Decimal(0);
 
         for (const item of data.draftTransactions) {
           const { amount, category, description, merchantName, date, type } = item;
@@ -648,6 +727,7 @@ const assistant = async (req: Request, res: Response, next: NextFunction) => {
 
           // If transaction is an EXPENSE, update the aggregate sheets
           if (type === "EXPENSE") {
+            balanceChange = balanceChange.sub(transAmount);
             const day = startOfDay(transDate);
             const month = startOfMonth(transDate);
 
@@ -722,7 +802,55 @@ const assistant = async (req: Request, res: Response, next: NextFunction) => {
                 amount: transAmount,
               },
             });
+          } else if (type === "INCOME") {
+            balanceChange = balanceChange.add(transAmount);
+            const month = startOfMonth(transDate);
+
+            // Upsert Monthly Income Total
+            const monthlyIncome = await tx.monthlyIncome.upsert({
+              where: {
+                userId_month: {
+                  userId: user.id,
+                  month,
+                },
+              },
+              update: {
+                total: { increment: transAmount },
+              },
+              create: {
+                userId: user.id,
+                month,
+                total: transAmount,
+              },
+            });
+
+            // Upsert Monthly Income Item Category
+            await tx.monthlyIncomeItem.upsert({
+              where: {
+                monthId_category: {
+                  monthId: monthlyIncome.id,
+                  category,
+                },
+              },
+              update: {
+                amount: { increment: transAmount },
+              },
+              create: {
+                monthId: monthlyIncome.id,
+                category,
+                amount: transAmount,
+              },
+            });
           }
+        }
+
+        if (!balanceChange.isZero()) {
+          await tx.user.update({
+            where: { id: user.id },
+            data: {
+              balance: { increment: balanceChange },
+            },
+          });
         }
 
         return records;

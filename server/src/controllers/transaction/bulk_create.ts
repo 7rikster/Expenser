@@ -51,6 +51,7 @@ const bulkCreate = async (
     /* 4️⃣ Execute Batch Database Operations inside Transaction */
     const createdTransactions = await prisma.$transaction(async (tx) => {
       const records = [];
+      let balanceChange = new P.Decimal(0);
 
       for (const item of transactions) {
         const { amount, category, description, merchantName, date, type } = item;
@@ -81,6 +82,7 @@ const bulkCreate = async (
 
         // If transaction is an EXPENSE, update the aggregate sheets
         if (type === "EXPENSE") {
+          balanceChange = balanceChange.sub(transAmount);
           const day = startOfDay(transDate);
           const month = startOfMonth(transDate);
 
@@ -155,7 +157,55 @@ const bulkCreate = async (
               amount: transAmount,
             },
           });
+        } else if (type === "INCOME") {
+          balanceChange = balanceChange.add(transAmount);
+          const month = startOfMonth(transDate);
+
+          // Upsert Monthly Income Total
+          const monthlyIncome = await tx.monthlyIncome.upsert({
+            where: {
+              userId_month: {
+                userId: user.id,
+                month,
+              },
+            },
+            update: {
+              total: { increment: transAmount },
+            },
+            create: {
+              userId: user.id,
+              month,
+              total: transAmount,
+            },
+          });
+
+          // Upsert Monthly Income Item Category
+          await tx.monthlyIncomeItem.upsert({
+            where: {
+              monthId_category: {
+                monthId: monthlyIncome.id,
+                category,
+              },
+            },
+            update: {
+              amount: { increment: transAmount },
+            },
+            create: {
+              monthId: monthlyIncome.id,
+              category,
+              amount: transAmount,
+            },
+          });
         }
+      }
+
+      if (!balanceChange.isZero()) {
+        await tx.user.update({
+          where: { id: user.id },
+          data: {
+            balance: { increment: balanceChange },
+          },
+        });
       }
 
       return records;

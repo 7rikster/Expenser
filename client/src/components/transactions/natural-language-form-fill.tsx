@@ -8,10 +8,11 @@ import { Label } from "../ui/label";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { UseMutateAsyncFunction } from "@tanstack/react-query";
+import { ScannedData } from "@/lib/types";
 
 type NaturalLanguageFormFillProps = {
-    onScanComplete: (scannedData: any) => void;
-    extractLanguage: UseMutateAsyncFunction<unknown, Error, { input: string; }, unknown>;
+    onScanComplete: (scannedData: ScannedData   ) => void;
+    extractLanguage: UseMutateAsyncFunction<ScannedData, Error, { input: string; }, unknown>;
     isExtracting: boolean;
     isReceiptScanning: boolean;
 }

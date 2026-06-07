@@ -11,6 +11,11 @@ export interface ExpenseSummary {
   categories: CategoryBreakdown[];
 }
 
+export interface IncomeSummary{
+  total: number;
+  categories: CategoryBreakdown[];
+}
+
 export interface UserProfile {
   id: string;
   name: string | null;
@@ -25,6 +30,7 @@ export interface DashboardData {
   thisMonthExpense: ExpenseSummary;
   lastMonthExpense: ExpenseSummary;
   transactionCount: number;
+  thisMonthIncome: IncomeSummary;
 }
 
 export interface MonthlyTrendPoint {
@@ -74,4 +80,5 @@ export interface ScannedData{
   description: string | null;
   date: string | null;
   category: string | null;
+  type: "INCOME" | "EXPENSE" | null;
 }

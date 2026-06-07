@@ -72,11 +72,12 @@ export default function Dashboard() {
       name: name || "No Name",
       imageUrl: user.imageUrl,
     });
+    // console.log("Create user response: ", response);
   }, [isLoaded, user]);
 
   // React Query hooks
   const { data: dashboardData, isLoading: isDashboardLoading, isFetching: isDashboardFetching } = useDashboardData();
-  console.log("Fetching: ", isDashboardFetching);
+  // console.log("dashboardData: ", dashboardData);
   const { data: trendData, isLoading: isTrendLoading } = useMonthlyTrend();
 
   const { data: transactionData, isLoading: isTransactionsLoading } = useTransactionList({
@@ -89,10 +90,8 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto p-4 md:p-6">
-      {/* Summary Cards */}
       
 
-      {/* Filters */}
       {/* <DashboardFilters /> */}
 
       {/* Charts Row: Trend + Pie */}

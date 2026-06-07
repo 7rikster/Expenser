@@ -50,9 +50,13 @@ const updateTransaction = async (
 
     const amountChanged = !oldAmount.eq(newAmount);
     const categoryChanged = oldCategory !== newCategory;
-    const needsAggregateUpdate = existing.type === "EXPENSE" && (amountChanged || categoryChanged);
+    const needsAggregateUpdate = amountChanged || categoryChanged;
 
-    /* ── 4. Simple update (no aggregate impact) ──────────────── */
+    const balanceChange = existing.type === "INCOME"
+      ? newAmount.sub(oldAmount)
+      : oldAmount.sub(newAmount);
+
+    /* ── 4. Simple update (no aggregate/balance impact) ──────── */
     if (!needsAggregateUpdate) {
       const updated = await prisma.transaction.update({
         where: { id },
@@ -75,19 +79,29 @@ const updateTransaction = async (
       );
     }
 
-    /* ── 5. Prefetch aggregate records in parallel (2 DB calls) ── */
+    /* ── 5. Prefetch aggregate records in parallel ───────────── */
     const day = startOfDay(existing.date);
     const month = startOfMonth(existing.date);
 
-    const [dailyExpense, monthlyExpense] = await Promise.all([
-      prisma.dailyExpense.findUnique({
-        where: { userId_date: { userId: user.id, date: day } },
-        include: { expenseItems: true },
-      }),
-      prisma.monthlyExpense.findUnique({
-        where: { userId_month: { userId: user.id, month } },
-        include: { expenseItems: true },
-      }),
+    const [dailyExpense, monthlyExpense, monthlyIncome] = await Promise.all([
+      existing.type === "EXPENSE"
+        ? prisma.dailyExpense.findUnique({
+            where: { userId_date: { userId: user.id, date: day } },
+            include: { expenseItems: true },
+          })
+        : null,
+      existing.type === "EXPENSE"
+        ? prisma.monthlyExpense.findUnique({
+            where: { userId_month: { userId: user.id, month } },
+            include: { expenseItems: true },
+          })
+        : null,
+      existing.type === "INCOME"
+        ? prisma.monthlyIncome.findUnique({
+            where: { userId_month: { userId: user.id, month } },
+            include: { incomeItems: true },
+          })
+        : null,
     ]);
 
     /* ── 6. Atomic transaction: update + rollback + reapply ─── */
@@ -105,7 +119,17 @@ const updateTransaction = async (
 
         const ops: Promise<unknown>[] = [];
 
-        // ── 6.2 Daily aggregate rollback + reapply ──────────
+        // ── 6.2 Update User balance
+        if (!balanceChange.isZero()) {
+          ops.push(
+            tx.user.update({
+              where: { id: user.id },
+              data: { balance: { increment: balanceChange } },
+            })
+          );
+        }
+
+        // ── 6.3 Daily aggregate rollback + reapply ──────────
         if (dailyExpense) {
           const netTotalChange = newAmount.sub(oldAmount); // positive = increase, negative = decrease
           const newDailyTotal = dailyExpense.total.add(netTotalChange);
@@ -180,7 +204,7 @@ const updateTransaction = async (
           }
         }
 
-        // ── 6.3 Monthly aggregate rollback + reapply ────────
+        // ── 6.4 Monthly aggregate rollback + reapply ────────
         if (monthlyExpense) {
           const netTotalChange = newAmount.sub(oldAmount);
           const newMonthlyTotal = monthlyExpense.total.add(netTotalChange);
@@ -253,7 +277,80 @@ const updateTransaction = async (
           }
         }
 
-        // Fire all aggregate ops in parallel
+        // ── 6.5 Monthly income aggregate rollback + reapply ──
+        if (monthlyIncome) {
+          const netTotalChange = newAmount.sub(oldAmount);
+          const newMonthlyTotal = monthlyIncome.total.add(netTotalChange);
+
+          if (newMonthlyTotal.lte(0)) {
+            ops.push(tx.monthlyIncome.delete({ where: { id: monthlyIncome.id } }));
+          } else {
+            ops.push(
+              tx.monthlyIncome.update({
+                where: { id: monthlyIncome.id },
+                data: { total: newMonthlyTotal },
+              })
+            );
+
+            const monthlyItemsByCategory = new Map(
+              monthlyIncome.incomeItems.map((item) => [item.category, item])
+            );
+
+            if (categoryChanged) {
+              // ── Rollback old category
+              const oldItem = monthlyItemsByCategory.get(oldCategory);
+              if (oldItem) {
+                const oldItemNewTotal = oldItem.amount.sub(oldAmount);
+                if (oldItemNewTotal.lte(0)) {
+                  ops.push(tx.monthlyIncomeItem.delete({ where: { id: oldItem.id } }));
+                } else {
+                  ops.push(
+                    tx.monthlyIncomeItem.update({
+                      where: { id: oldItem.id },
+                      data: { amount: oldItemNewTotal },
+                    })
+                  );
+                }
+              }
+
+              // ── Reapply new category (upsert)
+              ops.push(
+                tx.monthlyIncomeItem.upsert({
+                  where: {
+                    monthId_category: {
+                      monthId: monthlyIncome.id,
+                      category: newCategory,
+                    },
+                  },
+                  update: { amount: { increment: newAmount } },
+                  create: {
+                    monthId: monthlyIncome.id,
+                    category: newCategory,
+                    amount: newAmount,
+                  },
+                })
+              );
+            } else {
+              // Same category — adjust by difference
+              const item = monthlyItemsByCategory.get(oldCategory);
+              if (item) {
+                const itemNewTotal = item.amount.add(netTotalChange);
+                if (itemNewTotal.lte(0)) {
+                  ops.push(tx.monthlyIncomeItem.delete({ where: { id: item.id } }));
+                } else {
+                  ops.push(
+                    tx.monthlyIncomeItem.update({
+                      where: { id: item.id },
+                      data: { amount: itemNewTotal },
+                    })
+                  );
+                }
+              }
+            }
+          }
+        }
+
+        // Fire all aggregate/user ops in parallel
         await Promise.all(ops);
 
         return updatedTxn;

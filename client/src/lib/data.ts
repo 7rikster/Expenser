@@ -36,6 +36,20 @@ export const defaultCategories = [
     icon: "Home",
   },
   {
+    id: "pocket-money",
+    name: "Pocket Money",
+    type: "INCOME",
+    color: "#3b82f6", // blue-500
+    icon: "Gift",
+  },
+  {
+    id: "gift",
+    name: "Gift",
+    type: "INCOME",
+    color: "#d946ef", // violet-500
+    icon: "Gift",
+  },
+  {
     id: "other-income",
     name: "Other Income",
     type: "INCOME",

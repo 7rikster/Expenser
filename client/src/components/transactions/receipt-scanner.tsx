@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Camera, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { UseMutateAsyncFunction } from "@tanstack/react-query";
+import { ScannedData } from "@/lib/types";
 
 type ReceiptScannerProps = {
-    onScanComplete: (scannedData: any) => void;
-    uploadReceipt: UseMutateAsyncFunction<any, Error, FormData, unknown>;
+    onScanComplete: (scannedData: ScannedData) => void;
+    uploadReceipt: UseMutateAsyncFunction<ScannedData, Error, FormData, unknown>;
     isUploading: boolean;
     isNaturalLanguageExtracting: boolean;
 }

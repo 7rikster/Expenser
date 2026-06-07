@@ -38,7 +38,7 @@ const naturalLanguageExtraction = async (
 
     const prompt = `
     Current local date: ${localDate}
-    Analyze this expense input and extract structured data.
+    Analyze this expense or income input and extract structured data.
 
     Rules:
     - Resolve relative dates like:
@@ -51,15 +51,21 @@ const naturalLanguageExtraction = async (
     - Return the date in ISO 8601 format.
     - If no date is mentioned, return an empty string.
     - Amount should only contain the numeric value.
-    - Category must be one of:
+    - If the input indicates expense, set type to "EXPENSE".
+    - Expense Category must be one of:
       housing, transportation, groceries, utilities,
       entertainment, food, shopping, healthcare,
       education, personal, travel, insurance,
-      gifts, bills, other-expense
+      gifts, bills, other-expense, 
+    - If the input indicates income, set type to "INCOME".
+    - Income Category must be one of:
+      salary, investments, business-income,rental-income, pocket-money,gift, freelance, other-income
+    - If the type cannot be determined, set it to null.
 
     Return ONLY valid JSON in this exact format:
     {
       "amount": number,
+      "type": "INCOME" | "EXPENSE" | null,
       "date": "ISO date string",
       "description": "string",
       "merchantName": "string",
@@ -93,6 +99,7 @@ const naturalLanguageExtraction = async (
                 description: data.description,
                 merchantName: data.merchantName,
                 category: data.category,
+                type: data.type,
             }
         })
     )

@@ -104,6 +104,12 @@ const create = async (
       });
 
       if(type === "EXPENSE") {
+        // Update user balance
+        const balanceUpdate = tx.user.update({
+          where: { id: user.id },
+          data: { balance: { decrement: expenseAmount } },
+        });
+
         // 4.2 DailyExpense
         const dailyFlow = async() => {
           const dailyExpense = await tx.dailyExpense.upsert({
@@ -179,7 +185,52 @@ const create = async (
             },
           });
         }
-        await Promise.all([dailyFlow(), monthlyFlow()]);
+        await Promise.all([balanceUpdate, dailyFlow(), monthlyFlow()]);
+      } else if (type === "INCOME") {
+        // Update user balance
+        const balanceUpdate = tx.user.update({
+          where: { id: user.id },
+          data: { balance: { increment: expenseAmount } },
+        });
+
+        // MonthlyIncome aggregation flow
+        const monthlyIncomeFlow = async () => {
+          const monthlyIncome = await tx.monthlyIncome.upsert({
+            where: {
+              userId_month: {
+                userId: user.id,
+                month,
+              },
+            },
+            update: {
+              total: { increment: expenseAmount },
+            },
+            create: {
+              userId: user.id,
+              month,
+              total: expenseAmount,
+            },
+          });
+
+          // MonthlyIncomeItem aggregation
+          await tx.monthlyIncomeItem.upsert({
+            where: {
+              monthId_category: {
+                monthId: monthlyIncome.id,
+                category,
+              },
+            },
+            update: {
+              amount: { increment: expenseAmount },
+            },
+            create: {
+              monthId: monthlyIncome.id,
+              category,
+              amount: expenseAmount,
+            },
+          });
+        }
+        await Promise.all([balanceUpdate, monthlyIncomeFlow()]);
       }
       await redis.del(cacheKey);
       await redis.del(monthlyTrendCacheKey);
