@@ -1,2 +1,4 @@
 import update from "./update.js";
-export { update };
+import get from "./get.js";
+import dismissWarning from "./dismissWarning.js";
+export { update, get, dismissWarning };

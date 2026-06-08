@@ -74,7 +74,7 @@ const getBudget = async (
         (sum, cb) => sum.add(new P.Decimal(cb.amount.toString())),
         new P.Decimal(0)
       );
-      const warning = categoryTotal.gt(new P.Decimal(currentBudget.amount.toString()))
+      const warning = categoryTotal.gt(new P.Decimal(currentBudget.amount.toString())) && !currentBudget.warningDismissed
         ? "Category budgets total exceeds the monthly budget"
         : undefined;
 
@@ -84,6 +84,7 @@ const getBudget = async (
           id: currentBudget.id,
           amount: Number(currentBudget.amount),
           month: currentBudget.month,
+          warningDismissed: currentBudget.warningDismissed,
           categoryBudgets: currentBudget.categoryBudgets.map((cb) => ({
             ...cb,
             amount: Number(cb.amount),
@@ -119,6 +120,7 @@ const getBudget = async (
           id: previousBudget.id,
           amount: Number(previousBudget.amount),
           month: previousBudget.month,
+          warningDismissed: previousBudget.warningDismissed,
           categoryBudgets: previousBudget.categoryBudgets.map((cb) => ({
             ...cb,
             amount: Number(cb.amount),

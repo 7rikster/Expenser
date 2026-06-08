@@ -25,6 +25,8 @@ export const JsonNull = runtime.JsonNull;
 export const AnyNull = runtime.AnyNull;
 export const ModelName = {
     User: 'User',
+    UserBudget: 'UserBudget',
+    CategoryBudget: 'CategoryBudget',
     DailyExpense: 'DailyExpense',
     DailyExpenseItem: 'DailyExpenseItem',
     MonthlyExpense: 'MonthlyExpense',
@@ -45,11 +47,24 @@ export const UserScalarFieldEnum = {
     email: 'email',
     name: 'name',
     imageUrl: 'imageUrl',
-    dailyBudget: 'dailyBudget',
-    monthlyBudget: 'monthlyBudget',
     balance: 'balance',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
+};
+export const UserBudgetScalarFieldEnum = {
+    id: 'id',
+    amount: 'amount',
+    month: 'month',
+    userId: 'userId',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt',
+    warningDismissed: 'warningDismissed'
+};
+export const CategoryBudgetScalarFieldEnum = {
+    id: 'id',
+    category: 'category',
+    amount: 'amount',
+    userBudgetId: 'userBudgetId'
 };
 export const DailyExpenseScalarFieldEnum = {
     id: 'id',

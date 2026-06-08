@@ -57,11 +57,13 @@ const updateBudget = async (
         },
         update: {
           amount: budgetAmount,
+          warningDismissed: false,
         },
         create: {
           userId: user.id,
           month: targetMonth,
           amount: budgetAmount,
+          warningDismissed: false,
         },
       });
 
@@ -117,7 +119,7 @@ const updateBudget = async (
       (sum, cb) => sum.add(new P.Decimal(cb.amount.toString())),
       new P.Decimal(0)
     );
-    const warning = categoryTotal.gt(new P.Decimal(result.amount.toString()))
+    const warning = categoryTotal.gt(new P.Decimal(result.amount.toString())) && !result.warningDismissed
       ? "Category budgets total exceeds the monthly budget"
       : undefined;
 

@@ -35,11 +35,13 @@ const updateBudget = async (req, res, next) => {
                 },
                 update: {
                     amount: budgetAmount,
+                    warningDismissed: false,
                 },
                 create: {
                     userId: user.id,
                     month: targetMonth,
                     amount: budgetAmount,
+                    warningDismissed: false,
                 },
             });
             if (categoryBudgets && Array.isArray(categoryBudgets)) {
@@ -80,11 +82,12 @@ const updateBudget = async (req, res, next) => {
             return next(res.status(500).json({ status: "error", msg: "Failed to update budget" }));
         }
         const categoryTotal = result.categoryBudgets.reduce((sum, cb) => sum.add(new P.Decimal(cb.amount.toString())), new P.Decimal(0));
-        const warning = categoryTotal.gt(new P.Decimal(result.amount.toString()))
+        const warning = categoryTotal.gt(new P.Decimal(result.amount.toString())) && !result.warningDismissed
             ? "Category budgets total exceeds the monthly budget"
             : undefined;
         const todayKey = new Date().toISOString().slice(0, 10);
         await redis.del(`dashboard:${clerkUserId}:${todayKey}`);
+        await redis.del(`budget:${clerkUserId}:${targetMonth.toISOString()}`);
         return next(res.status(200).json({
             status: "success",
             data: {

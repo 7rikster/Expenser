@@ -34,6 +34,7 @@ model UserBudget {
   categoryBudgets CategoryBudget[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  warningDismissed Boolean          @default(false)
 
   @@unique([userId, month])
   @@index([userId])
