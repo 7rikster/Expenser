@@ -31,8 +31,6 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
         id: true,
         name: true,
         email: true,
-        dailyBudget: true,
-        monthlyBudget: true,
         balance: true
       }
     });
@@ -64,8 +62,6 @@ const create = async (req: Request, res: Response, next: NextFunction) => {
         name,
         clerkUserId: userId,
         imageUrl: imageUrl || null,
-        dailyBudget: 100,
-        monthlyBudget: 3000,
       },
     });
     await redis.set(cacheKey, JSON.stringify({ user }), "EX", 300); 

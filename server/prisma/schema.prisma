@@ -13,8 +13,7 @@ model User {
   email         String           @unique
   name          String?
   imageUrl      String?
-  dailyBudget   Decimal?         @db.Decimal(10, 2)
-  monthlyBudget Decimal?         @db.Decimal(10, 2)
+  userBudget    UserBudget[]
   balance       Decimal          @default(0) @db.Decimal(10, 2)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
@@ -24,6 +23,33 @@ model User {
   transactions  Transaction[]
 
   @@map("users")
+}
+
+model UserBudget {
+  id              String           @id @default(uuid())
+  amount          Decimal          @db.Decimal(10, 2)
+  month           DateTime
+  userId          String
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  categoryBudgets CategoryBudget[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([userId, month])
+  @@index([userId])
+  @@map("userBudgets")
+}
+
+model CategoryBudget {
+  id           String     @id @default(uuid())
+  category     String
+  amount       Decimal    @db.Decimal(10, 2)
+  userBudgetId String
+  userBudget   UserBudget @relation(fields: [userBudgetId], references: [id], onDelete: Cascade)
+
+  @@unique([userBudgetId, category])
+  @@index([userBudgetId])
+  @@map("categoryBudgets")
 }
 
 model DailyExpense {

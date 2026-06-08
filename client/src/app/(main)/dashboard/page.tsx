@@ -106,7 +106,7 @@ export default function Dashboard() {
           <Suspense fallback={<ChartSkeleton />}>
             <CategoryPieChart />
           </Suspense>
-          <BudgetProgress data={dashboardData} isLoading={isDashboardLoading} />
+          {/* <BudgetProgress data={dashboardData} isLoading={isDashboardLoading} /> */}
         </div>
       </div>
 
