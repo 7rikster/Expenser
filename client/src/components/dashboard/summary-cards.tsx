@@ -15,9 +15,11 @@ import type { DashboardData } from "@/lib/types";
 interface SummaryCardsProps {
   data: DashboardData | undefined;
   isLoading: boolean;
+  budget: number|undefined;
+  monthlyBudgetLoading: boolean;
 }
 
-function SummaryCardsComponent({ data, isLoading }: SummaryCardsProps) {
+function SummaryCardsComponent({ data, isLoading, budget, monthlyBudgetLoading }: SummaryCardsProps) {
   if (isLoading || !data) {
     return (
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -37,7 +39,7 @@ function SummaryCardsComponent({ data, isLoading }: SummaryCardsProps) {
   const monthlySpent = Number(data.thisMonthExpense.total);
   const monthlyIncome = Number(data.thisMonthIncome.total);
   const lastMonthSpent = Number(data.lastMonthExpense.total || 0);
-  const monthlyBudget = Number(data.user.monthlyBudget || 0);
+  const monthlyBudget = monthlyBudgetLoading ? 0 : Number(budget || 0);
   const remaining = monthlyBudget - monthlySpent;
   const monthChange =
     lastMonthSpent > 0

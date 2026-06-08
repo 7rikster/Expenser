@@ -19,6 +19,8 @@ import {
   useCreateUser,
 } from "@/hooks/use-dashboard";
 import { useDashboardStore } from "@/store/dashboard-store";
+import { getCurrentMonth } from "@/lib/transaction-constants";
+import { useBudget } from "@/hooks/use-budget";
 
 // Lazy load heavy chart components
 const ExpenseTrendChart = lazy(() =>
@@ -77,6 +79,8 @@ export default function Dashboard() {
 
   // React Query hooks
   const { data: dashboardData, isLoading: isDashboardLoading, isFetching: isDashboardFetching } = useDashboardData();
+  const currentMonth = getCurrentMonth();
+  const { data: budgetResponse, isLoading: isBudgetLoading } = useBudget(currentMonth);
   // console.log("dashboardData: ", dashboardData);
   const { data: trendData, isLoading: isTrendLoading } = useMonthlyTrend();
 
@@ -97,7 +101,7 @@ export default function Dashboard() {
       {/* Charts Row: Trend + Pie */}
       <div className="grid gap-6 lg:grid-cols-10">
         <div className="lg:col-span-6 flex flex-col gap-4">
-          <SummaryCards data={dashboardData} isLoading={isDashboardLoading} />
+          <SummaryCards data={dashboardData} isLoading={isDashboardLoading} budget={budgetResponse?.budget?.amount} monthlyBudgetLoading={isBudgetLoading} />
           <Suspense fallback={<ChartSkeleton />}>
             <ExpenseTrendChart data={trendData} isLoading={isTrendLoading} />
           </Suspense>
@@ -106,7 +110,7 @@ export default function Dashboard() {
           <Suspense fallback={<ChartSkeleton />}>
             <CategoryPieChart />
           </Suspense>
-          {/* <BudgetProgress data={dashboardData} isLoading={isDashboardLoading} /> */}
+          <BudgetProgress data={dashboardData} isLoading={isDashboardLoading} budgetResponse={budgetResponse} isBudgetLoading={isBudgetLoading} showCircles={true}/>
         </div>
       </div>
 
