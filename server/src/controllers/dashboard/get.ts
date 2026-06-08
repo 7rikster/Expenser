@@ -33,8 +33,6 @@ const getDashboardData = async (
         id: true,
         name: true,
         email: true,
-        dailyBudget: true,
-        monthlyBudget: true,
         balance: true,
       },
     });

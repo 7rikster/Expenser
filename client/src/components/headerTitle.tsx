@@ -9,6 +9,7 @@ import Link from "next/link";
 const TITLE_MAP: Record<string, string> = {
   dashboard: "Welcome",
   transactions: "Transactions",
+  budget: "Budgets",
   reports: "Reports",
   goals: "Goals",
   subscriptions: "Subscriptions",

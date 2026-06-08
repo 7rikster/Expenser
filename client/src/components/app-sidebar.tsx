@@ -49,6 +49,11 @@ export const AppSidebar = () => {
       icon: Github,
     },
     {
+      title: "Budgets",
+      url: "/budget",
+      icon: Github,
+    },
+    {
       title: "Reports",
       url: "/reports",
       icon: BookOpen,

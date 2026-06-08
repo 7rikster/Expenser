@@ -20,8 +20,25 @@ export interface UserProfile {
   id: string;
   name: string | null;
   email: string;
-  dailyBudget: number | null;
-  monthlyBudget: number | null;
+}
+
+export interface CategoryBudget {
+  id?: string;
+  category: string;
+  amount: number;
+}
+export interface UserBudget {
+  id: string;
+  amount: number;
+  month: string;
+  warningDismissed: boolean;
+  categoryBudgets: CategoryBudget[];
+}
+export interface BudgetResponse {
+  budgetStatus: "active" | "template" | "none";
+  budget?: UserBudget;
+  templateMonth?: string;
+  warning?: string;
 }
 
 export interface DashboardData {

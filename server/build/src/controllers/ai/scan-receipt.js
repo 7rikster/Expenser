@@ -24,15 +24,24 @@ const scanReceipt = async (req, res, next) => {
       - Date (in ISO format)
       - Description or items purchased (brief summary)
       - Merchant/store name
-      - Suggested category (one of: housing,transportation,groceries,utilities,entertainment,food,shopping,healthcare,education,personal,travel,insurance,gifts,bills,other-expense )
-      
+      - If the input indicates expense, set type to "EXPENSE".
+      - Expense Category must be one of:
+        housing, transportation, groceries, utilities,
+        entertainment, food, shopping, healthcare,
+        education, personal, travel, insurance,
+        gifts, bills, other-expense, 
+      - If the input indicates income, set type to "INCOME".
+      - Income Category must be one of:
+        salary, investments, business-income,rental-income, pocket-money,gift, freelance, other-income
+      - If the type cannot be determined, set it to null.
       Only respond with valid JSON in this exact format:
       {
         "amount": number,
         "date": "ISO date string",
         "description": "string",
         "merchantName": "string",
-        "category": "string"
+        "category": "string",
+        "type": "INCOME" | "EXPENSE" | null
       }
 
       If its not a recipt, return an empty object
@@ -59,6 +68,7 @@ const scanReceipt = async (req, res, next) => {
                 description: data.description,
                 merchantName: data.merchantName,
                 category: data.category,
+                type: data.type,
             }
         }));
     }

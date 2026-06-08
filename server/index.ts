@@ -33,6 +33,7 @@ app.use("/user", router.user);
 app.use("/transaction", router.transaction);
 app.use("/dashboard", router.dashboard);
 app.use("/ai", router.ai);
+app.use("/budget", router.budget);
 
 app.listen(process.env.PORT, () => {
   console.log(`Server running at port ${process.env.PORT}`);
