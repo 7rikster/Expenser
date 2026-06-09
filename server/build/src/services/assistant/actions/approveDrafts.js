@@ -1,38 +1,18 @@
-import { prisma } from "../../lib/index.js";
-import { startOfDay, startOfMonth, getWeekStart, toLocalDateString, invalidateTransactionListCache } from "../../utils/functions.js";
-import { Prisma as P } from "../../../generated/prisma/client";
-import redis from "../../lib/redis.js";
-const bulkCreate = async (req, res, next) => {
-    try {
-        const { userId: clerkUserId } = req.auth();
-        if (!clerkUserId) {
-            return next(res.status(401).json({
-                status: "error",
-                msg: "Unauthorized",
-            }));
-        }
-        const user = await prisma.user.findUnique({
-            where: { clerkUserId },
-        });
-        if (!user) {
-            return next(res.status(404).json({
-                status: "error",
-                msg: "User not found",
-            }));
-        }
-        const { transactions } = req.body;
-        if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
-            return next(res.status(400).json({
-                status: "error",
-                msg: "A non-empty transactions array is required",
-            }));
-        }
+import { prisma } from "../../../lib";
+import { Prisma as P } from "../../../../generated/prisma/client";
+import redis from "src/lib/redis";
+import { getWeekStart, invalidateTransactionListCache, startOfDay, startOfMonth, toLocalDateString, } from "src/utils/functions";
+export const ApproveDrafts = async ({ userId, data, clerkUserId, }) => {
+    if (data.draftTransactions && data.draftTransactions.length > 0) {
         const createdTransactions = await prisma.$transaction(async (tx) => {
             const records = [];
             let balanceChange = new P.Decimal(0);
-            for (const item of transactions) {
+            for (const item of data.draftTransactions) {
                 const { amount, category, description, merchantName, date, type } = item;
-                if (!amount || !category || !type || (type !== "EXPENSE" && type !== "INCOME")) {
+                if (!amount ||
+                    !category ||
+                    !type ||
+                    (type !== "EXPENSE" && type !== "INCOME")) {
                     throw new Error("Missing required transaction properties: amount, category, type");
                 }
                 const transAmount = new P.Decimal(amount);
@@ -48,7 +28,7 @@ const bulkCreate = async (req, res, next) => {
                         description: formattedDescription,
                         date: transDate,
                         isRecurring: false,
-                        userId: user.id,
+                        userId: userId,
                     },
                 });
                 records.push(newTrans);
@@ -59,7 +39,7 @@ const bulkCreate = async (req, res, next) => {
                     const dailyExpense = await tx.dailyExpense.upsert({
                         where: {
                             userId_date: {
-                                userId: user.id,
+                                userId: userId,
                                 date: day,
                             },
                         },
@@ -67,7 +47,7 @@ const bulkCreate = async (req, res, next) => {
                             total: { increment: transAmount },
                         },
                         create: {
-                            userId: user.id,
+                            userId: userId,
                             date: day,
                             total: transAmount,
                         },
@@ -91,7 +71,7 @@ const bulkCreate = async (req, res, next) => {
                     const monthlyExpense = await tx.monthlyExpense.upsert({
                         where: {
                             userId_month: {
-                                userId: user.id,
+                                userId: userId,
                                 month,
                             },
                         },
@@ -99,7 +79,7 @@ const bulkCreate = async (req, res, next) => {
                             total: { increment: transAmount },
                         },
                         create: {
-                            userId: user.id,
+                            userId: userId,
                             month,
                             total: transAmount,
                         },
@@ -127,7 +107,7 @@ const bulkCreate = async (req, res, next) => {
                     const monthlyIncome = await tx.monthlyIncome.upsert({
                         where: {
                             userId_month: {
-                                userId: user.id,
+                                userId: userId,
                                 month,
                             },
                         },
@@ -135,7 +115,7 @@ const bulkCreate = async (req, res, next) => {
                             total: { increment: transAmount },
                         },
                         create: {
-                            userId: user.id,
+                            userId: userId,
                             month,
                             total: transAmount,
                         },
@@ -160,7 +140,7 @@ const bulkCreate = async (req, res, next) => {
             }
             if (!balanceChange.isZero()) {
                 await tx.user.update({
-                    where: { id: user.id },
+                    where: { id: userId },
                     data: {
                         balance: { increment: balanceChange },
                     },
@@ -168,7 +148,7 @@ const bulkCreate = async (req, res, next) => {
             }
             return records;
         }, { timeout: 20000 });
-        const uniqueDates = Array.from(new Set(transactions.map((t) => toLocalDateString(new Date(t.date || Date.now()))))).map(dStr => new Date(dStr));
+        const uniqueDates = Array.from(new Set(data.draftTransactions.map((t) => toLocalDateString(new Date(t.date || Date.now()))))).map((dStr) => new Date(dStr));
         const currentTodayKey = toLocalDateString(new Date());
         await redis.del(`dashboard:${clerkUserId}:${currentTodayKey}`);
         for (const dateObj of uniqueDates) {
@@ -186,18 +166,23 @@ const bulkCreate = async (req, res, next) => {
             await redis.del(categoryBreakdownCacheKey);
         }
         await invalidateTransactionListCache(redis, clerkUserId);
-        return res.status(201).json({
+        data.replyText = `Successfully approved! I've logged the ${createdTransactions.length} ${createdTransactions.length === 1 ? "transaction" : "transactions"} to your database.`;
+        data.draftTransactions = [];
+        return {
             status: "success",
-            msg: `${createdTransactions.length} transactions created successfully.`,
-            data: createdTransactions,
-        });
+            msg: "Approved",
+            action: "APPROVE_DRAFTS",
+            transactions: [],
+            replyText: data.replyText,
+        };
     }
-    catch (error) {
-        console.error("Bulk Create Transaction Controller Error:", error);
-        return next(res.status(500).json({
-            status: "error",
-            msg: "Internal server error during transaction bulk creation",
-        }));
+    else {
+        return {
+            status: "Failed",
+            msg: "No draft transactions to approve",
+            action: "GENERAL",
+            transactions: [],
+            replyText: "I couldn't find any draft transactions to approve.",
+        };
     }
 };
-export default bulkCreate;

@@ -14,15 +14,16 @@ const getCategoryBreakdown = async (req, res, next) => {
         if (!user) {
             return next(res.status(404).json({ status: "error", msg: "User not found" }));
         }
-        let targetDate = new Date();
+        const now = new Date();
+        let targetDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
         const monthParam = req.query.month;
         if (monthParam) {
             const [year, month] = monthParam.split("-").map(Number);
             if (!isNaN(year) && !isNaN(month) && month >= 1 && month <= 12) {
-                targetDate = new Date(year, month - 1, 1);
+                targetDate = new Date(Date.UTC(year, month - 1, 1));
             }
         }
-        const cacheKey = `category-breakdown:${clerkUserId}:${targetDate}`;
+        const cacheKey = `category-breakdown:${clerkUserId}:${targetDate.toISOString()}`;
         const cached = await redis.get(cacheKey);
         if (cached) {
             return next(res.status(200).json({ status: "success", data: JSON.parse(cached) }));

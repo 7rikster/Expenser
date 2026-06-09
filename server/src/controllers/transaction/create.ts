@@ -72,9 +72,7 @@ const create = async (
     const month = startOfMonth(expenseDate);
 
     const monthStart = new Date(
-      expenseDate.getFullYear(),
-      expenseDate.getMonth(),
-      1
+      Date.UTC(expenseDate.getUTCFullYear(), expenseDate.getUTCMonth(), 1)
     );
     const weekStart = toLocalDateString(getWeekStart(expenseDate));
     const todayKey = new Date().toISOString().slice(0,10);

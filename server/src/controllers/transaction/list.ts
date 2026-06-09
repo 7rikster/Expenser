@@ -56,8 +56,8 @@ const list = async (req: Request, res: Response, next: NextFunction) => {
     if (month) {
       const [y, m] = month.split("-").map(Number);
       where.date = {
-        gte: new Date(y, m - 1, 1),
-        lt: new Date(y, m, 1),
+        gte: new Date(Date.UTC(y, m - 1, 1)),
+        lt: new Date(Date.UTC(y, m, 1)),
       };
     }
 

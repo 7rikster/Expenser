@@ -39,7 +39,7 @@ const create = async (req, res, next) => {
         const expenseDate = date ? new Date(date) : new Date();
         const day = startOfDay(expenseDate);
         const month = startOfMonth(expenseDate);
-        const monthStart = new Date(expenseDate.getFullYear(), expenseDate.getMonth(), 1);
+        const monthStart = new Date(Date.UTC(expenseDate.getUTCFullYear(), expenseDate.getUTCMonth(), 1));
         const weekStart = toLocalDateString(getWeekStart(expenseDate));
         const todayKey = new Date().toISOString().slice(0, 10);
         const cacheKey = `dashboard:${clerkUserId}:${todayKey}`;

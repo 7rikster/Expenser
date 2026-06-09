@@ -29,17 +29,18 @@ const getCategoryBreakdown = async (
     }
 
     // Parse the month query param (YYYY-MM) or default to current month
-    let targetDate = new Date();
+    const now = new Date();
+    let targetDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
     const monthParam = req.query.month as string | undefined;
 
     if (monthParam) {
       const [year, month] = monthParam.split("-").map(Number);
       if (!isNaN(year) && !isNaN(month) && month >= 1 && month <= 12) {
-        targetDate = new Date(year, month - 1, 1);
+        targetDate = new Date(Date.UTC(year, month - 1, 1));
       }
     }
 
-    const cacheKey = `category-breakdown:${clerkUserId}:${targetDate}`;
+    const cacheKey = `category-breakdown:${clerkUserId}:${targetDate.toISOString()}`;
     const cached = await redis.get(cacheKey);
 
     if (cached) {

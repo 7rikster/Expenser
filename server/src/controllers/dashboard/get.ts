@@ -43,11 +43,11 @@ const getDashboardData = async (
 
     // Last month data for comparison
     const now = new Date();
-    const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
     
     // Transaction count for current month
     const currentMonthStart = startOfMonth(now);
-    const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
 
     const [todayExpense, thisMonthExpense, lastMonthExpense, transactionCount, thisMonthIncome] = await Promise.all([
       getDayExpense(user.id),

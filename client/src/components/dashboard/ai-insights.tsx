@@ -17,6 +17,7 @@ interface AIInsightsProps {
   dashboardData: DashboardData | undefined;
   trendData: MonthlyTrendPoint[] | undefined;
   isLoading: boolean;
+  budgetAmount?: number;
 }
 
 interface Insight {
@@ -29,13 +30,12 @@ interface Insight {
 
 function generateInsights(
   dashboard: DashboardData,
-  trend: MonthlyTrendPoint[]
+  trend: MonthlyTrendPoint[],
+  monthlyBudget: number
 ): Insight[] {
   const insights: Insight[] = [];
   const monthlySpent = Number(dashboard.thisMonthExpense.total);
   const lastMonthSpent = Number(dashboard.lastMonthExpense.total);
-  const monthlyBudget = Number(dashboard.user.monthlyBudget || 0);
-  const dailyBudget = Number(dashboard.user.dailyBudget || 0);
   const todaySpent = Number(dashboard.todayExpense.total);
 
   // Monthly comparison
@@ -110,16 +110,7 @@ function generateInsights(
     });
   }
 
-  // Daily budget check
-  if (dailyBudget > 0 && todaySpent > dailyBudget) {
-    insights.push({
-      id: "daily-exceeded",
-      type: "alert",
-      icon: AlertTriangle,
-      title: "Daily Budget Exceeded",
-      description: `Today's spending of ₹${todaySpent.toLocaleString("en-IN", { minimumFractionDigits: 2 })} exceeds your daily budget of ₹${dailyBudget.toLocaleString("en-IN", { minimumFractionDigits: 2 })}.`,
-    });
-  }
+
 
   // Spending trend
   if (trend.length >= 3) {
@@ -177,11 +168,12 @@ function AIInsightsComponent({
   dashboardData,
   trendData,
   isLoading,
+  budgetAmount = 0,
 }: AIInsightsProps) {
   const insights = useMemo(() => {
     if (!dashboardData || !trendData) return [];
-    return generateInsights(dashboardData, trendData);
-  }, [dashboardData, trendData]);
+    return generateInsights(dashboardData, trendData, budgetAmount);
+  }, [dashboardData, trendData, budgetAmount]);
 
   if (isLoading) {
     return (

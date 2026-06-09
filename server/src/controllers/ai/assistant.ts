@@ -1,9 +1,6 @@
 import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { Request, Response, NextFunction } from "express";
 import { prisma } from "../../lib";
-import { startOfDay, startOfMonth, invalidateTransactionListCache, getWeekStart, toLocalDateString } from "src/utils/functions";
-import { Prisma as P } from "../../../generated/prisma/client";
-import redis from "src/lib/redis";
 import { executeAction } from "src/services/assistant/actionRegistry";
 
 // Initialize Gemini client with the API Key

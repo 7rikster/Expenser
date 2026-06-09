@@ -1,10 +1,8 @@
 export function startOfDay(date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    return d;
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 export function startOfMonth(date) {
-    return new Date(date.getFullYear(), date.getMonth(), 1);
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
 export function calculateNextRecurringDate(startDate, interval) {
     const date = new Date(startDate);
@@ -52,23 +50,23 @@ export const getTopCategoriesWithOthersAndPercentage = (items, topN = 4, totalAm
     }));
 };
 export function toLocalDateString(date) {
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, "0");
-    const d = String(date.getDate()).padStart(2, "0");
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+    const d = String(date.getUTCDate()).padStart(2, "0");
     return `${y}-${m}-${d}`;
 }
 export function getWeekStart(date) {
     const d = new Date(date);
-    const day = d.getDay();
+    const day = d.getUTCDay();
     const diff = day === 0 ? -6 : 1 - day;
-    d.setDate(d.getDate() + diff);
-    d.setHours(0, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() + diff);
+    d.setUTCHours(0, 0, 0, 0);
     return d;
 }
 export function getWeekEnd(weekStart) {
     const d = new Date(weekStart);
-    d.setDate(d.getDate() + 7);
-    d.setHours(0, 0, 0, 0);
+    d.setUTCDate(d.getUTCDate() + 7);
+    d.setUTCHours(0, 0, 0, 0);
     return d;
 }
 export async function invalidateTransactionListCache(redis, clerkUserId) {

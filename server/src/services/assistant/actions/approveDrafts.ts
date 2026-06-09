@@ -195,23 +195,23 @@ export const ApproveDrafts = async ({
     const uniqueDates = Array.from(
       new Set<string>(
         data.draftTransactions.map((t: any) =>
-          new Date(t.date || Date.now()).toDateString()
+          toLocalDateString(new Date(t.date || Date.now()))
         )
       )
-    ).map((dStr: string) => new Date(dStr));
-    const currentTodayKey = new Date().toISOString().slice(0, 10);
+    ).map((dStr: string) => new Date(dStr)); // dStr is YYYY-MM-DD, new Date(dStr) parses as UTC midnight
+    const currentTodayKey = toLocalDateString(new Date());
     await redis.del(`dashboard:${clerkUserId}:${currentTodayKey}`);
 
     for (const dateObj of uniqueDates) {
-      const todayKey = dateObj.toISOString().slice(0, 10);
-      const monthKey = dateObj.toISOString().slice(0, 7);
-      const monthStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), 1);
+      const todayKey = toLocalDateString(dateObj);
+      const monthKey = toLocalDateString(dateObj).slice(0, 7);
+      const monthStart = new Date(Date.UTC(dateObj.getUTCFullYear(), dateObj.getUTCMonth(), 1));
       const weekStart = toLocalDateString(getWeekStart(dateObj));
 
       const dashboardCacheKey = `dashboard:${clerkUserId}:${todayKey}`;
       const monthlyTrendCacheKey = `monthly-trend:${clerkUserId}:${monthKey}`;
       const weeklyPatternCacheKey = `weekly-spending:${clerkUserId}:${weekStart}`;
-      const categoryBreakdownCacheKey = `category-breakdown:${clerkUserId}:${monthStart}`;
+      const categoryBreakdownCacheKey = `category-breakdown:${clerkUserId}:${monthStart.toISOString()}`;
 
       await redis.del(dashboardCacheKey);
       await redis.del(monthlyTrendCacheKey);

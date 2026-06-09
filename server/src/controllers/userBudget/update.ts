@@ -36,6 +36,7 @@ const updateBudget = async (
 
     const targetDate = month ? new Date(month) : new Date();
     const targetMonth = startOfMonth(targetDate);
+    console.log("Target month for budget:", targetMonth.toISOString());
 
     const user = await prisma.user.findUnique({
       where: { clerkUserId },

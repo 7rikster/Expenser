@@ -33,7 +33,7 @@ const getMonthlyTrend = async (
     }
 
     const now = new Date();
-    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const sixMonthsAgo = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1));
 
     const monthlyExpenses = await prisma.monthlyExpense.findMany({
       where: {
@@ -50,13 +50,13 @@ const getMonthlyTrend = async (
     // Fill in missing months with 0
     const trend = [];
     for (let i = 5; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
       const monthKey = d.toISOString().slice(0, 7);
       const found = monthlyExpenses.find(
         (m) => new Date(m.month).toISOString().slice(0, 7) === monthKey
       );
       trend.push({
-        month: d.toLocaleDateString("en-US", { month: "short", year: "numeric" }),
+        month: d.toLocaleDateString("en-US", { month: "short", year: "numeric", timeZone: "UTC" }),
         total: found ? Number(found.total) : 0,
       });
     }

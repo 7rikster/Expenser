@@ -127,6 +127,7 @@ export default function Dashboard() {
             dashboardData={dashboardData}
             trendData={trendData}
             isLoading={isDashboardLoading || isTrendLoading}
+            budgetAmount={budgetResponse?.budget?.amount}
           />
         </div>
       </div>

@@ -1,13 +1,11 @@
 import { Decimal } from "generated/prisma/internal/prismaNamespace";
 
 export function startOfDay(date: Date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
 
 export function startOfMonth(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
 
 export function calculateNextRecurringDate(startDate: string, interval: string) {
@@ -90,9 +88,9 @@ export const getTopCategoriesWithOthersAndPercentage = (
 }
 
 export function toLocalDateString(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 
@@ -102,10 +100,10 @@ export function toLocalDateString(date: Date): string {
  */
 export function getWeekStart(date: Date): Date {
   const d = new Date(date);
-  const day = d.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+  const day = d.getUTCDay(); // 0=Sun, 1=Mon, ..., 6=Sat
   const diff = day === 0 ? -6 : 1 - day; // Shift so Monday = 0
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + diff);
+  d.setUTCHours(0, 0, 0, 0);
   return d;
 }
 
@@ -114,8 +112,8 @@ export function getWeekStart(date: Date): Date {
  */
 export function getWeekEnd(weekStart: Date): Date {
   const d = new Date(weekStart);
-  d.setDate(d.getDate() + 7); // exclusive end (Monday of next week)
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + 7); // exclusive end (Monday of next week)
+  d.setUTCHours(0, 0, 0, 0);
   return d;
 }
 

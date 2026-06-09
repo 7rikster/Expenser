@@ -27,9 +27,9 @@ const getDashboardData = async (req, res, next) => {
             return next(res.status(404).json({ status: "error", msg: "User not found" }));
         }
         const now = new Date();
-        const lastMonthDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const lastMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
         const currentMonthStart = startOfMonth(now);
-        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        const nextMonthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1));
         const [todayExpense, thisMonthExpense, lastMonthExpense, transactionCount, thisMonthIncome] = await Promise.all([
             getDayExpense(user.id),
             getThisMonthExpense(user.id),

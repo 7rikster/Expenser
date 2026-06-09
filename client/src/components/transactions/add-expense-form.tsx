@@ -83,6 +83,7 @@ function AddExpenseForm({ categories }: { categories: category[] }) {
     const formData = {
       ...data,
       amount: parseFloat(data.amount),
+      date: format(data.date, "yyyy-MM-dd"),
     };
     setTransactionLoading(true);
     const token = await getToken();
