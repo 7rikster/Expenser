@@ -6,6 +6,7 @@ export enum AssistantAction {
   CREATE_DRAFT = "CREATE_DRAFT",
   UPDATE_DRAFT = "UPDATE_DRAFT",
   DELETE_DRAFT = "DELETE_DRAFT",
+  GENERAL = "GENERAL"
 }
 
 export interface AssistantActionContext {

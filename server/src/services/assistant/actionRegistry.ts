@@ -13,6 +13,7 @@ export const actionHandlers = {
   [AssistantAction.CREATE_DRAFT]: DraftChanges,
   [AssistantAction.UPDATE_DRAFT]: DraftChanges,
   [AssistantAction.DELETE_DRAFT]: DraftChanges,
+  [AssistantAction.GENERAL]: DraftChanges,
 };
 
 export const executeAction = async(action: string, context: AssistantActionContext) => {
