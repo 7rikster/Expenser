@@ -173,6 +173,7 @@ function ProgressBar({
 }
 
 function BudgetProgressComponent({ data, isLoading, budgetResponse, isBudgetLoading, showCircles }: BudgetProgressProps) {
+  // console.log("Rendering BudgetProgress with data:", data, "budgetResponse:", budgetResponse);
   const currentMonth = getCurrentMonth();
   // const { data: budgetResponse, isLoading: isBudgetLoading } = useBudget(currentMonth);
   const { mutate: updateBudget, isPending: isUpdating } = useUpdateBudget();
@@ -303,7 +304,27 @@ function BudgetProgressComponent({ data, isLoading, budgetResponse, isBudgetLoad
   return (
     <Card className="border-0 shadow-sm h-full">
       <CardHeader className="pb-2">
+        {budgetResponse?.budgetStatus === "template" && (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 text-amber-500 text-xs flex items-center gap-2.5 justify-between">
+            <div className="flex gap-1">
+              <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="opacity-90">This is your last month's budget. Click 'Copy' to use it for the current month or click 'Configure' to set a new budget.</p>
+              </div>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSave}
+              disabled={isUpdating}
+              className="h-7 text-amber-500 hover:text-amber-600 hover:bg-amber-500/10 cursor-pointer shrink-0"
+            >
+              {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Copy"}
+            </Button>
+          </div>
+          )}
         <div className="flex justify-between items-center">
+          
           <div>
             <CardTitle className="text-base font-semibold">Budget Tracking</CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5">
