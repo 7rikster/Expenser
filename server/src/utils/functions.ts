@@ -7,6 +7,34 @@ export function startOfDay(date: Date) {
 export function startOfMonth(date: Date) {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), 1));
 }
+export function endOfMonth(date: Date) {
+  return new Date(
+    Date.UTC(
+      date.getUTCFullYear(),
+      date.getUTCMonth() + 1,
+      1,
+      0,
+      0,
+      0,
+      0
+    ) - 1
+  );
+}
+export function getPreviousDay() {
+  const date = new Date();
+
+  date.setDate(date.getDate() - 1);
+
+  return date;
+}
+
+export function getPreviousMonthDate() {
+  const date = new Date();
+
+  date.setMonth(date.getMonth() - 1);
+
+  return date;
+}
 
 export function calculateNextRecurringDate(startDate: string, interval: string) {
   const date = new Date(startDate);
