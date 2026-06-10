@@ -1,6 +1,6 @@
 # 💰 Expenser — Smart AI-Powered Personal Finance Tracker
 
-Expenser is a premium, state-of-the-art personal finance tracker designed to simplify budgeting, transaction logging, and financial analytics. By combining **Next.js 16**, **Express**, **Prisma (PostgreSQL)**, and the **Gemini 2.5 Flash API**, Expenser goes beyond traditional spreadsheets by introducing an interactive AI assistant that can scan receipts, parse natural language commands, and generate dynamic monthly reviews and spending insights.
+Expenser is a premium, state-of-the-art personal finance tracker designed to simplify budgeting, transaction logging, and financial analytics. By combining **Next.js 16**, **Express**, **Prisma (PostgreSQL)**, and the **Gemini AI**, Expenser goes beyond traditional spreadsheets by introducing an interactive AI assistant that can scan receipts, parse natural language commands, and generate dynamic monthly reviews and spending insights.
 
 ---
 
