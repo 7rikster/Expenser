@@ -5,6 +5,9 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import { serve } from "inngest/express";
+import { inngest } from "./src/inngest/client";
+import { functions } from "./src/inngest";
 
 import * as router from "./src/routers/index.js";
 import { clerkMiddleware } from "@clerk/express";
@@ -22,6 +25,9 @@ app
   .use(express.json())
   .use(express.urlencoded({ extended: true }))
   .use(clerkMiddleware());
+
+app.use("/api/inngest", serve({client:inngest, functions}));
+  
 
 
 //Routers  
