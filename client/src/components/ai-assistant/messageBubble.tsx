@@ -10,8 +10,27 @@ interface MessageBubbleProps {
   message: Message;
 }
 
+/**
+ * Renders basic inline markdown: **bold**, *italic*, and preserves whitespace.
+ * Handles bullet lists (- or •) as well.
+ */
+function renderMarkdown(text: string) {
+  // Split by markdown bold/italic patterns
+  const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    }
+    if (part.startsWith("*") && part.endsWith("*") && !part.startsWith("**")) {
+      return <em key={i}>{part.slice(1, -1)}</em>;
+    }
+    return <span key={i}>{part}</span>;
+  });
+}
+
 export default function MessageBubble({ message }: MessageBubbleProps) {
   const isUser = message.sender === "user";
+  const isCopilotResponse = message.action === "COPILOT_RESPONSE";
 
   return (
     <div className={`flex gap-3 max-w-[85%] ${isUser ? "ml-auto flex-row-reverse" : "mr-auto"}`}>
@@ -39,7 +58,9 @@ export default function MessageBubble({ message }: MessageBubbleProps) {
               />
             </div>
           )}
-          <p className="leading-relaxed text-xs md:text-sm whitespace-pre-wrap">{message.text}</p>
+          <p className={`leading-relaxed text-xs md:text-sm whitespace-pre-wrap`}>
+            {isCopilotResponse ? renderMarkdown(message.text) : message.text}
+          </p>
           <span className={`block text-[9px] text-right mt-1.5 select-none ${
             isUser ? "text-white/60" : "text-zinc-400"
           }`}>

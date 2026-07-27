@@ -8,5 +8,6 @@ const router = Express.Router();
 router.post("/scan-receipt", middlewares.ClerkAuth.ClerkExpressRequireAuth(), upload.single("receipt"), controllers.ai.scanReceipt);
 router.post("/natural-language-extraction", middlewares.ClerkAuth.ClerkExpressRequireAuth(), controllers.ai.naturalLanguageExtraction);
 router.post("/assistant", middlewares.ClerkAuth.ClerkExpressRequireAuth(), upload.single("file"), controllers.ai.assistant);
+router.post("/copilot", middlewares.ClerkAuth.ClerkExpressRequireAuth(), upload.single("file"), controllers.ai.copilot);
 
 export default router;
