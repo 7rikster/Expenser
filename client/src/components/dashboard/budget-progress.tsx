@@ -188,6 +188,18 @@ function BudgetProgressComponent({ data, isLoading, budgetResponse, isBudgetLoad
   const [newAmount, setNewAmount] = useState<number>(0);
   const [showWarning, setShowWarning] = useState(true);
 
+  useEffect(() => {
+    if(budgetResponse?.budget){
+      setMonthlyLimit(budgetResponse.budget.amount);
+      setEditCategories(
+        budgetResponse.budget.categoryBudgets.map((cb) => ({
+          category: cb.category,
+          amount: Number(cb.amount),
+        }))
+      );
+    } 
+  },[budgetResponse]);
+
   // Initialize dialog state when it opens
   useEffect(() => {
     if (isDialogOpen) {

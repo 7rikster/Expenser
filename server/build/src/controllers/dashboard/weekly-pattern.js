@@ -19,7 +19,7 @@ const getWeeklyPattern = async (req, res, next) => {
         const weekStartParam = req.query.weekStart;
         if (weekStartParam) {
             const [y, m, d] = weekStartParam.split("-").map(Number);
-            const parsed = new Date(y, m - 1, d);
+            const parsed = new Date(Date.UTC(y, m - 1, d));
             if (!isNaN(parsed.getTime())) {
                 weekStart = getWeekStart(parsed);
             }
@@ -59,7 +59,7 @@ const getWeeklyPattern = async (req, res, next) => {
         const result = [];
         for (let i = 0; i < 7; i++) {
             const d = new Date(weekStart);
-            d.setDate(d.getDate() + i);
+            d.setUTCDate(d.getUTCDate() + i);
             const dateKey = toLocalDateString(d);
             result.push({
                 date: dateKey,

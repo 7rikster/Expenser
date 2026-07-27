@@ -33,7 +33,9 @@ export const ModelName = {
     MonthlyExpenseItem: 'MonthlyExpenseItem',
     MonthlyIncome: 'MonthlyIncome',
     MonthlyIncomeItem: 'MonthlyIncomeItem',
-    Transaction: 'Transaction'
+    Transaction: 'Transaction',
+    SpendingInsight: 'SpendingInsight',
+    MonthlyReview: 'MonthlyReview'
 };
 export const TransactionIsolationLevel = runtime.makeStrictEnum({
     ReadUncommitted: 'ReadUncommitted',
@@ -125,9 +127,42 @@ export const TransactionScalarFieldEnum = {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
 };
+export const SpendingInsightScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    type: 'type',
+    title: 'title',
+    message: 'message',
+    month: 'month',
+    data: 'data',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
+export const MonthlyReviewScalarFieldEnum = {
+    id: 'id',
+    userId: 'userId',
+    month: 'month',
+    totalIncome: 'totalIncome',
+    totalExpense: 'totalExpense',
+    netSavings: 'netSavings',
+    savingsRate: 'savingsRate',
+    categoryBreakdown: 'categoryBreakdown',
+    recurringExpenses: 'recurringExpenses',
+    budgetStatus: 'budgetStatus',
+    summary: 'summary',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+};
 export const SortOrder = {
     asc: 'asc',
     desc: 'desc'
+};
+export const NullableJsonNullValueInput = {
+    DbNull: DbNull,
+    JsonNull: JsonNull
+};
+export const JsonNullValueInput = {
+    JsonNull: JsonNull
 };
 export const QueryMode = {
     default: 'default',
@@ -136,5 +171,10 @@ export const QueryMode = {
 export const NullsOrder = {
     first: 'first',
     last: 'last'
+};
+export const JsonNullValueFilter = {
+    DbNull: DbNull,
+    JsonNull: JsonNull,
+    AnyNull: AnyNull
 };
 export const defineExtension = runtime.Extensions.defineExtension;

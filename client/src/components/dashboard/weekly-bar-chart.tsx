@@ -20,32 +20,32 @@ import { useWeeklyPattern } from "@/hooks/use-dashboard";
 /** Returns the Monday (ISO week start) of the week containing `date`. */
 function getWeekStart(date: Date): Date {
   const d = new Date(date);
-  const day = d.getDay(); // 0=Sun, 1=Mon … 6=Sat
+  const day = d.getUTCDay(); // 0=Sun, 1=Mon … 6=Sat
   const diff = day === 0 ? -6 : 1 - day;
-  d.setDate(d.getDate() + diff);
-  d.setHours(0, 0, 0, 0);
+  d.setUTCDate(d.getUTCDate() + diff);
+  d.setUTCHours(0, 0, 0, 0);
   return d;
 }
 
-/** Format a Date as YYYY-MM-DD using LOCAL date parts (not UTC). */
-function toLocalDate(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
+/** Format a Date as YYYY-MM-DD using UTC date parts. */
+function toUTCDateString(date: Date): string {
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, "0");
+  const d = String(date.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
 }
 
 /** Format a date range label like "12 May – 18 May 2026" */
 function formatWeekRange(weekStartStr: string): string {
-  const start = new Date(weekStartStr + "T00:00:00");
+  const start = new Date(weekStartStr + "T00:00:00Z");
   const end = new Date(start);
-  end.setDate(end.getDate() + 6);
+  end.setUTCDate(end.getUTCDate() + 6);
 
-  const sDay = start.getDate();
-  const sMonth = start.toLocaleString("default", { month: "short" });
-  const eDay = end.getDate();
-  const eMonth = end.toLocaleString("default", { month: "short" });
-  const eYear = end.getFullYear();
+  const sDay = start.getUTCDate();
+  const sMonth = start.toLocaleString("default", { month: "short", timeZone: "UTC" });
+  const eDay = end.getUTCDate();
+  const eMonth = end.toLocaleString("default", { month: "short", timeZone: "UTC" });
+  const eYear = end.getUTCFullYear();
 
   if (sMonth === eMonth) {
     return `${sDay} – ${eDay} ${sMonth} ${eYear}`;
@@ -58,12 +58,13 @@ function formatWeekRange(weekStartStr: string): string {
 const CustomTooltip = ({ active, payload }: any) => {
   if (active && payload && payload.length) {
     const { date, amount } = payload[0].payload;
-    const d = new Date(date + "T00:00:00");
+    const d = new Date(date + "T00:00:00Z");
     const dayLabel = d.toLocaleDateString("en-IN", {
       weekday: "short",
       day: "numeric",
       month: "short",
       year: "numeric",
+      timeZone: "UTC",
     });
 
     return (
@@ -122,7 +123,7 @@ function ChevronRight({ className }: { className?: string }) {
 
 function WeeklyBarChartComponent() {
   // Current week start as the default
-  const currentWeekStart = useMemo(() => toLocalDate(getWeekStart(new Date())), []);
+  const currentWeekStart = useMemo(() => toUTCDateString(getWeekStart(new Date())), []);
   const [weekStart, setWeekStart] = useState(currentWeekStart);
 
   const { data, isLoading } = useWeeklyPattern(weekStart);
@@ -130,17 +131,17 @@ function WeeklyBarChartComponent() {
   // Navigation handlers
   const goToPreviousWeek = useCallback(() => {
     setWeekStart((prev) => {
-      const d = new Date(prev + "T00:00:00");
-      d.setDate(d.getDate() - 7);
-      return toLocalDate(d);
+      const d = new Date(prev + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() - 7);
+      return toUTCDateString(d);
     });
   }, []);
 
   const goToNextWeek = useCallback(() => {
     setWeekStart((prev) => {
-      const d = new Date(prev + "T00:00:00");
-      d.setDate(d.getDate() + 7);
-      return toLocalDate(d);
+      const d = new Date(prev + "T00:00:00Z");
+      d.setUTCDate(d.getUTCDate() + 7);
+      return toUTCDateString(d);
     });
   }, []);
 
