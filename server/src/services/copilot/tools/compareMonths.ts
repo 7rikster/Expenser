@@ -1,5 +1,5 @@
-import { prisma } from "../../../lib/index.js";
-import { startOfMonth, endOfMonth } from "src/utils/functions";
+import { startOfMonth } from "src/utils/functions";
+import { getOrGenerateMonthlyReview } from "./helper.js";
 
 function parseMonth(monthStr?: string): Date {
   if (!monthStr) return startOfMonth(new Date());
@@ -22,66 +22,31 @@ export async function compareMonths({
     ? parseMonth(args.month2)
     : new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
 
-  const m1End = endOfMonth(m1Date);
-  const m2End = endOfMonth(m2Date);
+  // Fetch MonthlyReview records in parallel (includes cached or force-regenerated reviews)
+  const [m1Review, m2Review] = await Promise.all([
+    getOrGenerateMonthlyReview(userId, m1Date),
+    getOrGenerateMonthlyReview(userId, m2Date),
+  ]);
 
-  // Fetch aggregates and category breakdowns in parallel
-  const [m1Expense, m1Income, m2Expense, m2Income, m1Categories, m2Categories] =
-    await Promise.all([
-      prisma.monthlyExpense.findUnique({
-        where: { userId_month: { userId, month: m1Date } },
-      }),
-      prisma.monthlyIncome.findUnique({
-        where: { userId_month: { userId, month: m1Date } },
-      }),
-      prisma.monthlyExpense.findUnique({
-        where: { userId_month: { userId, month: m2Date } },
-      }),
-      prisma.monthlyIncome.findUnique({
-        where: { userId_month: { userId, month: m2Date } },
-      }),
-      prisma.transaction.groupBy({
-        by: ["category"],
-        where: {
-          userId,
-          type: "EXPENSE",
-          date: { gte: m1Date, lte: m1End },
-        },
-        _sum: { amount: true },
-      }),
-      prisma.transaction.groupBy({
-        by: ["category"],
-        where: {
-          userId,
-          type: "EXPENSE",
-          date: { gte: m2Date, lte: m2End },
-        },
-        _sum: { amount: true },
-      }),
-    ]);
+  const m1TotalExpense = Number(m1Review.totalExpense);
+  const m1TotalIncome = Number(m1Review.totalIncome);
+  const m1NetSavings = Number(m1Review.netSavings);
+  const m1SavingsRate = Number(m1Review.savingsRate);
 
-  const m1TotalExpense = m1Expense ? m1Expense.total.toNumber() : 0;
-  const m1TotalIncome = m1Income ? m1Income.total.toNumber() : 0;
-  const m1NetSavings = m1TotalIncome - m1TotalExpense;
-  const m1SavingsRate =
-    m1TotalIncome === 0
-      ? 0
-      : Number(((m1NetSavings / m1TotalIncome) * 100).toFixed(1));
+  const m2TotalExpense = Number(m2Review.totalExpense);
+  const m2TotalIncome = Number(m2Review.totalIncome);
+  const m2NetSavings = Number(m2Review.netSavings);
+  const m2SavingsRate = Number(m2Review.savingsRate);
 
-  const m2TotalExpense = m2Expense ? m2Expense.total.toNumber() : 0;
-  const m2TotalIncome = m2Income ? m2Income.total.toNumber() : 0;
-  const m2NetSavings = m2TotalIncome - m2TotalExpense;
-  const m2SavingsRate =
-    m2TotalIncome === 0
-      ? 0
-      : Number(((m2NetSavings / m2TotalIncome) * 100).toFixed(1));
+  const m1CatBreakdown = (m1Review.categoryBreakdown as any[]) || [];
+  const m2CatBreakdown = (m2Review.categoryBreakdown as any[]) || [];
 
   // Build category change deltas
   const m1CatMap = new Map(
-    m1Categories.map((g) => [g.category, g._sum.amount?.toNumber() || 0])
+    m1CatBreakdown.map((c) => [c.category, Number(c.amount) || 0])
   );
   const m2CatMap = new Map(
-    m2Categories.map((g) => [g.category, g._sum.amount?.toNumber() || 0])
+    m2CatBreakdown.map((c) => [c.category, Number(c.amount) || 0])
   );
 
   const allCategories = new Set([...m1CatMap.keys(), ...m2CatMap.keys()]);

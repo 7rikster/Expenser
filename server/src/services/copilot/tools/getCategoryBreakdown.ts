@@ -1,5 +1,6 @@
 import { prisma } from "../../../lib/index.js";
 import { startOfMonth, endOfMonth } from "src/utils/functions";
+import { getOrGenerateMonthlyReview } from "./helper.js";
 
 function parseMonth(monthStr?: string): Date {
   if (!monthStr) return startOfMonth(new Date());
@@ -61,33 +62,15 @@ export async function getCategoryBreakdown({
   }
 
   // Overall category breakdown
-  const groups = await prisma.transaction.groupBy({
-    by: ["category"],
-    where: {
-      userId,
-      type: "EXPENSE",
-      date: { gte: monthDate, lte: monthEnd },
-    },
-    _sum: { amount: true },
-    orderBy: { _sum: { amount: "desc" } },
-  });
+  const review = await getOrGenerateMonthlyReview(userId, monthDate);
+  const totalExpense = Number(review.totalExpense);
 
-  const totalExpense = groups.reduce(
-    (sum, g) => sum + (g._sum.amount?.toNumber() || 0),
-    0
-  );
-
-  const categories = groups.map((g) => {
-    const amount = g._sum.amount?.toNumber() || 0;
-    return {
-      category: g.category,
-      amount,
-      percentage:
-        totalExpense === 0
-          ? 0
-          : Number(((amount / totalExpense) * 100).toFixed(1)),
-    };
-  });
+  const categories = ((review.categoryBreakdown as any[]) || []).map((c) => ({
+    category: c.category,
+    amount: Number(c.amount) || 0,
+    percentage: Number(c.percentage) || 0,
+    subCategories: c.subCategories,
+  }));
 
   return {
     month: monthDate.toISOString().slice(0, 7),

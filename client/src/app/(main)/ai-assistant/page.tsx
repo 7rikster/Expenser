@@ -119,6 +119,8 @@ export default function AIAssistantPage() {
     await sendMessage(formData);
   };
 
+  
+
   return (
     <div
       onDragEnter={handleDrag}
@@ -137,11 +139,6 @@ export default function AIAssistantPage() {
           </div>
         </div>
       )}
-
-      {/* <ChatHeader 
-        hasMessages={messages.length > 0} 
-        onClearChat={clearChat} 
-      /> */}
 
       <MessageList
         messages={messages}

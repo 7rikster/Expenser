@@ -1,4 +1,4 @@
-import { prisma } from "../../../lib/index.js";
+import { getOrGenerateMonthlyReview } from "./helper.js";
 
 
 // Discretionary categories where spending can typically be reduced
@@ -29,38 +29,22 @@ export async function calculateSavingsPlan({
     );
   }
 
-  const [expenses, incomes, categoryGroups] = await Promise.all([
-    prisma.monthlyExpense.findMany({
-      where: { userId, month: { in: months } },
-    }),
-    prisma.monthlyIncome.findMany({
-      where: { userId, month: { in: months } },
-    }),
-    prisma.transaction.groupBy({
-      by: ["category"],
-      where: {
-        userId,
-        type: "EXPENSE",
-        date: { gte: months[months.length - 1], lte: new Date() },
-      },
-      _sum: { amount: true },
-    }),
-  ]);
+  const reviews = await Promise.all(
+    months.map((m) => getOrGenerateMonthlyReview(userId, m))
+  );
 
-  const monthCount = Math.max(expenses.length, 1);
-  const totalExpense = expenses.reduce(
-    (sum, e) => sum + e.total.toNumber(),
+  const monthCount = Math.max(reviews.length, 1);
+  const totalExpense = reviews.reduce(
+    (sum, r) => sum + (Number(r.totalExpense) || 0),
     0
   );
-  const totalIncome = incomes.reduce(
-    (sum, i) => sum + i.total.toNumber(),
+  const totalIncome = reviews.reduce(
+    (sum, r) => sum + (Number(r.totalIncome) || 0),
     0
   );
 
   const avgMonthlyExpense = Number((totalExpense / monthCount).toFixed(0));
-  const avgMonthlyIncome = Number(
-    (totalIncome / Math.max(incomes.length, 1)).toFixed(0)
-  );
+  const avgMonthlyIncome = Number((totalIncome / monthCount).toFixed(0));
   const currentMonthlySavings = avgMonthlyIncome - avgMonthlyExpense;
 
   // Calculate how long it would take at current rate
@@ -80,10 +64,18 @@ export async function calculateSavingsPlan({
       : currentMonthlySavings > 0;
 
   // Suggest cuts from discretionary categories
+  const categorySumMap = new Map<string, number>();
+  for (const r of reviews) {
+    const breakdown = (r.categoryBreakdown as any[]) || [];
+    for (const item of breakdown) {
+      const amount = Number(item.amount) || 0;
+      categorySumMap.set(item.category, (categorySumMap.get(item.category) || 0) + amount);
+    }
+  }
+
   const avgCategoryMap = new Map<string, number>();
-  for (const g of categoryGroups) {
-    const avg = (g._sum.amount?.toNumber() || 0) / monthCount;
-    avgCategoryMap.set(g.category, Number(avg.toFixed(0)));
+  for (const [category, totalAmount] of categorySumMap.entries()) {
+    avgCategoryMap.set(category, Number((totalAmount / monthCount).toFixed(0)));
   }
 
   const suggestedCuts: {

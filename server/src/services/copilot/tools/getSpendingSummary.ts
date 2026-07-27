@@ -1,5 +1,5 @@
-import { prisma } from "../../../lib/index.js";
 import { startOfMonth } from "src/utils/functions";
+import { getOrGenerateMonthlyReview } from "./helper.js";
 
 function parseMonth(monthStr?: string): Date {
   if (!monthStr) return startOfMonth(new Date());
@@ -29,20 +29,12 @@ export async function getSpendingSummary({
     monthDate.getUTCMonth() === now.getUTCMonth();
   const daysElapsed = isCurrentMonth ? now.getDate() : totalDaysInMonth;
 
-  const [monthlyExpense, monthlyIncome] = await Promise.all([
-    prisma.monthlyExpense.findUnique({
-      where: { userId_month: { userId, month: monthDate } },
-    }),
-    prisma.monthlyIncome.findUnique({
-      where: { userId_month: { userId, month: monthDate } },
-    }),
-  ]);
+  const review = await getOrGenerateMonthlyReview(userId, monthDate);
 
-  const totalExpense = monthlyExpense ? monthlyExpense.total.toNumber() : 0;
-  const totalIncome = monthlyIncome ? monthlyIncome.total.toNumber() : 0;
-  const netSavings = totalIncome - totalExpense;
-  const savingsRate =
-    totalIncome === 0 ? 0 : Number(((netSavings / totalIncome) * 100).toFixed(1));
+  const totalExpense = Number(review.totalExpense) || 0;
+  const totalIncome = Number(review.totalIncome) || 0;
+  const netSavings = Number(review.netSavings) || 0;
+  const savingsRate = Number(review.savingsRate) || 0;
   const dailyAverage = daysElapsed > 0 ? Number((totalExpense / daysElapsed).toFixed(0)) : 0;
 
   return {

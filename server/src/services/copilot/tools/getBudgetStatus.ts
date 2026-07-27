@@ -1,5 +1,5 @@
-import { prisma } from "../../../lib/index.js";
 import { startOfMonth } from "src/utils/functions";
+import { getOrGenerateMonthlyReview } from "./helper.js";
 
 function parseMonth(monthStr?: string): Date {
   if (!monthStr) return startOfMonth(new Date());
@@ -27,18 +27,10 @@ export async function getBudgetStatus({
   const currentDay = isCurrentMonth ? now.getDate() : totalDaysInMonth;
   const daysRatio = Number((currentDay / totalDaysInMonth).toFixed(2));
 
-  const [userBudget, monthlyExpense] = await Promise.all([
-    prisma.userBudget.findUnique({
-      where: { userId_month: { userId, month: monthDate } },
-      include: { categoryBudgets: true },
-    }),
-    prisma.monthlyExpense.findUnique({
-      where: { userId_month: { userId, month: monthDate } },
-      include: { expenseItems: true },
-    }),
-  ]);
+  const review = await getOrGenerateMonthlyReview(userId, monthDate);
+  const status = review.budgetStatus as any;
 
-  if (!userBudget) {
+  if (!status || !status.totalBudget || status.totalBudget === 0) {
     return {
       noBudgetSet: true,
       month: monthDate.toISOString().slice(0, 7),
@@ -47,32 +39,23 @@ export async function getBudgetStatus({
     };
   }
 
-  const totalBudget = userBudget.amount.toNumber();
-  const totalSpent = monthlyExpense ? monthlyExpense.total.toNumber() : 0;
-  const remaining = totalBudget - totalSpent;
-  const exceeded = totalSpent > totalBudget;
+  const totalBudget = Number(status.totalBudget);
+  const totalSpent = Number(status.totalSpent) || 0;
+  const remaining = Number(status.difference) || 0;
+  const exceeded = !!status.exceeded;
   const percentUsed =
     totalBudget === 0 ? 0 : Number(((totalSpent / totalBudget) * 100).toFixed(1));
 
-  // Build per-category breakdown
-  const expenseItemMap = new Map(
-    (monthlyExpense?.expenseItems || []).map((item) => [
-      item.category,
-      item.amount.toNumber(),
-    ])
-  );
-
-  const categoryBudgets = userBudget.categoryBudgets.map((cb) => {
-    const budgeted = cb.amount.toNumber();
-    const spent = expenseItemMap.get(cb.category) || 0;
+  const categoryBudgets = (status.categoryBudgets as any[] || []).map((cb) => {
+    const budgeted = Number(cb.budgeted) || 0;
+    const spent = Number(cb.spent) || 0;
     return {
       category: cb.category,
       budgeted,
       spent,
       remaining: budgeted - spent,
-      exceeded: spent > budgeted,
-      percentUsed:
-        budgeted === 0 ? 0 : Number(((spent / budgeted) * 100).toFixed(1)),
+      exceeded: !!cb.exceeded,
+      percentUsed: budgeted === 0 ? 0 : Number(((spent / budgeted) * 100).toFixed(1)),
     };
   });
 

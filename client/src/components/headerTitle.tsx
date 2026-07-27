@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { Button } from "./ui/button";
 import { SquarePen } from "lucide-react";
 import Link from "next/link";
+import ChatHeader from "./ai-assistant/chatHeader";
 
 const TITLE_MAP: Record<string, string> = {
   dashboard: "Welcome",
@@ -48,11 +49,15 @@ export default function HeaderTitle() {
         <h1 className="text-xl font-semibold text-foreground">
           {baseTitle}
         </h1>
-        <Link href="/transactions/add-expense">
+        {
+          segment === "ai-assistant"? <ChatHeader/>:
+          <Link href="/transactions/add-expense">
           <Button className="text-white cursor-pointer flex items-center gap-2">
             <SquarePen />
             Add Transaction
           </Button>
         </Link>
+        }
+        
       </div>
 }
