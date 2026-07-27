@@ -1,6 +1,5 @@
 import { prisma } from "../../../lib/index.js";
 import { generateAndStoreMonthlyReviewWithoutAI } from "../../analytics/monthlyReviewWithoutAI.js";
-import { generateAndStoreMonthlyReviewWithAI } from "../../analytics/monthlyReviewWithAI.js";
 
 /**
  * Fetches the MonthlyReview for a given user and month.
@@ -25,7 +24,7 @@ export async function getOrGenerateMonthlyReview(userId: string, monthDate: Date
 
   // 3. Fallback: if historical review is missing, generate it once
   if (!review) {
-    review = await generateAndStoreMonthlyReviewWithAI(userId, monthDate);
+    review = await generateAndStoreMonthlyReviewWithoutAI(userId, monthDate);
   }
 
   return review;

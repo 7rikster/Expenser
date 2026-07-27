@@ -11,6 +11,7 @@ interface MessageListProps {
 }
 
 const TOOL_LABELS: Record<string, { emoji: string; label: string }> = {
+  retrieve_financial_context: { emoji: "🧠", label: "Searching financial memory..." },
   get_spending_summary: { emoji: "📊", label: "Analyzing spending..." },
   get_budget_status: { emoji: "💰", label: "Checking budget..." },
   compare_months: { emoji: "📈", label: "Comparing months..." },

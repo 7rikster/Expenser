@@ -1,6 +1,23 @@
 import { SchemaType, type FunctionDeclaration } from "@google/generative-ai";
 
 export const copilotToolDeclarations: FunctionDeclaration[] = [
+  // RAG function
+  {
+    name: "retrieve_financial_context",
+    description:
+      "Search the user's historical monthly financial summaries using semantic search. Use this when the user asks about past spending patterns, historical trends, or comparisons spanning multiple months. Do NOT use for current month data (use other tools instead).",
+    parameters: {
+      type: SchemaType.OBJECT,
+      properties: {
+        query: {
+          type: SchemaType.STRING,
+          description:
+            "The search query describing what financial history to retrieve",
+        },
+      },
+      required: ["query"],
+    },
+  },
   // ── Financial Analysis Tools ──────────────────────────────
   {
     name: "get_spending_summary",
@@ -93,8 +110,7 @@ export const copilotToolDeclarations: FunctionDeclaration[] = [
       properties: {
         targetAmount: {
           type: SchemaType.NUMBER,
-          description:
-            "The total amount the user wants to save (in Rupees).",
+          description: "The total amount the user wants to save (in Rupees).",
         },
         targetMonths: {
           type: SchemaType.NUMBER,
@@ -167,31 +183,67 @@ export const copilotToolDeclarations: FunctionDeclaration[] = [
             type: SchemaType.OBJECT,
             properties: {
               id: { type: SchemaType.STRING, description: "A unique UUID v4." },
-              amount: { type: SchemaType.NUMBER, description: "Transaction amount." },
-              date: { type: SchemaType.STRING, description: "ISO 8601 date (YYYY-MM-DD)." },
-              description: { type: SchemaType.STRING, description: "What was bought or the purpose." },
-              merchantName: { type: SchemaType.STRING, description: "Vendor/store name." },
+              amount: {
+                type: SchemaType.NUMBER,
+                description: "Transaction amount.",
+              },
+              date: {
+                type: SchemaType.STRING,
+                description: "ISO 8601 date (YYYY-MM-DD).",
+              },
+              description: {
+                type: SchemaType.STRING,
+                description: "What was bought or the purpose.",
+              },
+              merchantName: {
+                type: SchemaType.STRING,
+                description: "Vendor/store name.",
+              },
               category: {
                 type: SchemaType.STRING,
                 format: "enum",
                 description: "Transaction category.",
                 enum: [
-                  "housing", "transportation", "groceries", "utilities",
-                  "entertainment", "food", "shopping", "healthcare",
-                  "education", "personal", "travel", "insurance",
-                  "gifts", "bills", "other-expense", "salary",
-                  "freelance", "investments", "business-income",
-                  "rental-income", "other-income",
+                  "housing",
+                  "transportation",
+                  "groceries",
+                  "utilities",
+                  "entertainment",
+                  "food",
+                  "shopping",
+                  "healthcare",
+                  "education",
+                  "personal",
+                  "travel",
+                  "insurance",
+                  "gifts",
+                  "bills",
+                  "other-expense",
+                  "salary",
+                  "freelance",
+                  "investments",
+                  "business-income",
+                  "rental-income",
+                  "other-income",
                 ],
               },
               type: {
                 type: SchemaType.STRING,
                 format: "enum",
-                description: "EXPENSE if user paid out, INCOME if user received money.",
+                description:
+                  "EXPENSE if user paid out, INCOME if user received money.",
                 enum: ["INCOME", "EXPENSE"],
               },
             },
-            required: ["id", "amount", "date", "description", "merchantName", "category", "type"],
+            required: [
+              "id",
+              "amount",
+              "date",
+              "description",
+              "merchantName",
+              "category",
+              "type",
+            ],
           },
         },
       },
@@ -224,9 +276,21 @@ export const copilotToolDeclarations: FunctionDeclaration[] = [
               description: { type: SchemaType.STRING },
               merchantName: { type: SchemaType.STRING },
               category: { type: SchemaType.STRING },
-              type: { type: SchemaType.STRING, format: "enum", enum: ["INCOME", "EXPENSE"] },
+              type: {
+                type: SchemaType.STRING,
+                format: "enum",
+                enum: ["INCOME", "EXPENSE"],
+              },
             },
-            required: ["id", "amount", "date", "description", "merchantName", "category", "type"],
+            required: [
+              "id",
+              "amount",
+              "date",
+              "description",
+              "merchantName",
+              "category",
+              "type",
+            ],
           },
         },
       },
@@ -249,9 +313,16 @@ export const copilotToolDeclarations: FunctionDeclaration[] = [
     parameters: {
       type: SchemaType.OBJECT,
       properties: {
-        limit: { type: SchemaType.NUMBER, description: "Number of matches to find. Default: 1." },
+        limit: {
+          type: SchemaType.NUMBER,
+          description: "Number of matches to find. Default: 1.",
+        },
         category: { type: SchemaType.STRING },
-        type: { type: SchemaType.STRING, format: "enum", enum: ["INCOME", "EXPENSE"] },
+        type: {
+          type: SchemaType.STRING,
+          format: "enum",
+          enum: ["INCOME", "EXPENSE"],
+        },
         merchantName: { type: SchemaType.STRING },
         startDate: { type: SchemaType.STRING },
         endDate: { type: SchemaType.STRING },

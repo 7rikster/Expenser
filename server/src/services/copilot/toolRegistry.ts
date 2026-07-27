@@ -11,6 +11,7 @@ import {
   confirmDeleteTransaction,
   executeDeleteTransaction,
 } from "./tools/deleteTransactionTool.js";
+import { retrieveFinancialContext } from "./tools/retrieveFinancialContext.js";
 
 export interface ToolCallContext {
   pendingDrafts: any[];
@@ -63,6 +64,9 @@ export async function executeToolCall(
 
     case "execute_delete_transaction":
       return executeDeleteTransaction({ userId, clerkUserId, context });
+    
+    case "retrieve_financial_context":
+      return retrieveFinancialContext({ userId, args: args as any });
 
     default:
       return { error: `Unknown tool: ${toolName}` };

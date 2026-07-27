@@ -2,8 +2,8 @@ import { prisma } from "../../lib";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Prisma } from "../../../generated/prisma/client";
 import { startOfMonth } from "src/utils/functions";
-import { generateMonthlyNarrative } from "./generateMonthlyNarrative";
-import { generateEmbedding } from "src/utils/assistant";
+import { generateMonthlyNarrative } from "src/services/copilot/rag/narrativeGenerator";
+import { generateEmbedding } from "../copilot/rag/embeddingService";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
