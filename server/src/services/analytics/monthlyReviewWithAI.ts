@@ -2,6 +2,8 @@ import { prisma } from "../../lib";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Prisma } from "../../../generated/prisma/client";
 import { startOfMonth } from "src/utils/functions";
+import { generateMonthlyNarrative } from "./generateMonthlyNarrative";
+import { generateEmbedding } from "src/utils/assistant";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -136,7 +138,7 @@ export async function generateAndStoreMonthlyReviewWithAI(
     description: string;
     amount: number;
     category: string;
-    interval: string | null;
+    interval: string;
   }[] = [];
 
   for (const tx of transactions) {
@@ -170,7 +172,7 @@ export async function generateAndStoreMonthlyReviewWithAI(
           description: tx.description || "Unknown",
           amount,
           category: tx.category,
-          interval: tx.recurringInterval,
+          interval: tx.recurringInterval || "Unknown",
         });
       }
     }
@@ -264,7 +266,7 @@ Data:
 - Recurring Expenses: ${JSON.stringify(recurringExpenses)}
 - Budget Status: ${JSON.stringify(budgetStatus)}
 
-Write a 3-5 sentence executive summary paragraph. Be specific with numbers. Highlight the biggest spending categories and any budget overruns. Comment on the savings rate. If there are concerning patterns (like high food delivery or ride-hailing), mention them. Keep the tone friendly but direct. Do not use bullet points or headers — just a cohesive paragraph.`;
+Write a 6-8 sentence executive summary paragraph. Be specific with numbers. Highlight the biggest spending categories and any budget overruns. Comment on the savings rate. If there are concerning patterns (like high food delivery or ride-hailing), mention them. Keep the tone friendly but direct. Do not use bullet points or headers — just a cohesive paragraph.`;
 
   const aiResult = await model.generateContent(prompt);
   const summary = aiResult.response.text().trim();
@@ -279,6 +281,26 @@ Write a 3-5 sentence executive summary paragraph. Be specific with numbers. High
     budgetStatus: budgetStatus as unknown as Prisma.InputJsonValue,
     summary,
   };
+
+  const content = generateMonthlyNarrative({
+    month: monthStart,
+    totalIncome,
+    totalExpense,
+    netSavings,
+    savingsRate,
+    categoryBreakdown,
+    recurringExpenses,
+    budgetStatus,
+    summary,
+  });
+
+  const embedding = await generateEmbedding(content);
+
+  await prisma.monthlyNarrative.upsert({
+    where: { userId_month: { userId, month: monthStart } },
+    update: { content, embedding },
+    create: { userId, month: monthStart, content, embedding },
+  });
 
   // ── 7. Upsert into database ──
   return prisma.monthlyReview.upsert({

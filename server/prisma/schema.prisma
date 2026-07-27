@@ -23,6 +23,7 @@ model User {
   transactions  Transaction[]
   spendingInsights SpendingInsight[]
   monthlyReviews   MonthlyReview[]
+  monthlyNarratives  MonthlyNarrative[]
 
   @@map("users")
 }
@@ -213,4 +214,17 @@ model MonthlyReview {
   @@unique([userId, month])
   @@index([userId])
   @@map("monthlyReviews")
+}
+
+model MonthlyNarrative {
+  id        String   @id @default(uuid())
+  userId    String
+  month     DateTime
+  content   String   // Dense narrative description of the month's finances
+  embedding Unsupported("vector(768)")? // 768 dimensions for Gemini text-embedding-004
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([userId, month])
+  @@map("monthlyNarratives")
 }

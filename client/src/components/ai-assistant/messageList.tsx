@@ -42,7 +42,7 @@ export default function MessageList({ messages, isProcessing }: MessageListProps
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-4">
-        <div className="p-4 bg-zinc-100 dark:bg-zinc-900 rounded-full text-zinc-400 animate-bounce">
+        <div className="p-4 bg-white dark:bg-zinc-900 rounded-full text-zinc-400 animate-bounce">
           <Bot className="w-12 h-12" />
         </div>
         <div>

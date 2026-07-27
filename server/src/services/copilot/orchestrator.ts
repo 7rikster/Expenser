@@ -223,7 +223,7 @@ export async function runCopilot(options: CopilotOptions, res: Response) {
   } catch (error: any) {
     console.error("Copilot Orchestrator Error:", error);
     sendSSE(res, "error", {
-      message: error.message || "Internal copilot error",
+      message: "There was an error processing your request. Please try again after some time.",
     });
     res.end();
   }

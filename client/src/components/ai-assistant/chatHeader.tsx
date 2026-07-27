@@ -22,11 +22,11 @@ export default function ChatHeader() {
     toast.success("Chat history cleared");
   };
   return (
-    <div className="bg-black rounded-lg">  
+    <div className="dark:bg-black rounded-lg">  
       {messages.length > 0 && (
         <button
           onClick={handleClearChat}
-          className="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-red-500 transition-colors p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg cursor-pointer"
+          className="flex items-center gap-1.5 text-xs  hover:text-red-500 transition-colors p-2 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-lg cursor-pointer"
         >
           <Trash2 className="w-3.5 h-3.5" />
           <span>Clear Conversation</span>
